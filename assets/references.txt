@@ -1,2 +1,0 @@
-Roles: Who Does What 
-  https://www.datacamp.com/tutorial/data-science-industry-infographic
