@@ -1,4 +1,5 @@
-# FinalProject_YelpGoogleMaps
+# FinalProject
+# Sentiment Analysis on Google and Yelp Reviews for Ulta Beauty
 > [!IMPORTANT]
 > _This activity (purely educational) corresponds to the final project of Bootcamp Henry - Data Science. It is part of our portfolio of practices that has allowed us to improve Data Science skills with real-world problems and data sets._
 > 
