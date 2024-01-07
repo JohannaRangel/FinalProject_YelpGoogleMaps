@@ -19,13 +19,9 @@ At Data Insight Pro, we don't just provide data consulting; we build bridges to 
 
 Thank you for exploring our project repository. Feel free to navigate through the different sections to gain a comprehensive understanding of our methodologies and outcomes. 
 > If you have any questions or inquiries, please don't hesitate to reach out.<br /> 
-[![Contact Us](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/blob/main/assets/contact.png)](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/wiki#contributors)
+<a href="https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/wiki#contributors"><img src="https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/blob/main/assets/contact.png" alt="Contact Us" width="100">
 
-
-> <a href="https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/wiki#contributors">
-  <img src="https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/blob/main/assets/contact.png" alt="Contact Us" width="100">
-
-
+[![Contact Us](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/blob/main/assets/contact3.png)](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/wiki#contributors)
 ## Repository Structure<br />
 ├─ [assets/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/assets) _Contains multimedia resources, images, or other assets used in the project._<br />
 ├─ [dashboard/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/dashboard) _Includes files related to the creation and development of an interactive dashboard._<br />
