@@ -18,7 +18,11 @@ In this particular project, our experience led us to work hand in hand with **Ul
 At Data Insight Pro, we don't just provide data consulting; we build bridges to the future, where informed decision-making drives business success. Our dedication to excellence and innovation places us at the forefront of the industry, and every project is an opportunity to showcase how data can be the compass guiding businesses toward their objectives.
 
 Thank you for exploring our project repository. Feel free to navigate through the different sections to gain a comprehensive understanding of our methodologies and outcomes. 
-> If you have any questions or inquiries, please don't hesitate to reach out. <a href="https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/wiki#contributors">
+> If you have any questions or inquiries, please don't hesitate to reach out.<br /> 
+[![Contact Us](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/blob/main/assets/contact.png)](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/wiki#contributors)
+
+
+> <a href="https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/wiki#contributors">
   <img src="https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/blob/main/assets/contact.png" alt="Contact Us" width="100">
 
 
