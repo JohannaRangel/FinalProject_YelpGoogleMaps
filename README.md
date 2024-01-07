@@ -1,4 +1,4 @@
-# Sentiment Analysis on Google and Yelp Reviews for Ulta Beauty
+# Sentiment Analysis on Google Maps and Yelp Reviews for Ulta Beauty
 ### Final Project - Henry Bootcamps Data Science
 > [!IMPORTANT]
 > _This activity (purely educational) corresponds to the final project of Bootcamp Henry - Data Science. It is part of our portfolio of practices that has allowed us to improve Data Science skills with real-world problems and data sets._
@@ -7,11 +7,20 @@
 
 As a data consulting firm, our commitment goes beyond mere data collection. We believe in the transformative power of data, working tirelessly to turn this belief into a tangible reality for our clients. We invite you to explore the structure of this repository to delve deeper into the intricacies of our project. From datasets and preprocessing to analysis and visualization, the repository is a comprehensive resource that provides insight into our methodology and approach.
 
+**Online Reputation:** According to Brightlocal 76% of consumers “regularly” read online reviews when browsing for local businesses. Regarding review platforms in 2022 Google is the most used and trusted platform for reviews followed by Yelp.
+
+<p align="center">
+  <img src="https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/blob/main/assets/platformreviews.png" width="400" alt="platform">
+</p>
+
+In this particular project, our experience led us to work hand in hand with **Ulta Beauty**, one of the leading companies in the beauty industry. We were tasked with performing a **Sentiment Analysis on Google Maps and Yelp Reviews**. Extensive exploration of these reviews aimed to uncover valuable insights, improve Ulta Beauty's understanding of customer sentiment, and facilitate data-driven decision making.
+
 At Data Insight Pro, we don't just provide data consulting; we build bridges to the future, where informed decision-making drives business success. Our dedication to excellence and innovation places us at the forefront of the industry, and every project is an opportunity to showcase how data can be the compass guiding businesses toward their objectives.
 
-In this particular project, our expertise led us to contract with Ulta Beauty, one of the leading companies in the beauty industry. We were tasked with conducting a Sentiment Analysis on Google and Yelp reviews for Ulta Beauty. The comprehensive exploration of these reviews aimed to uncover valuable insights, enhancing Ulta Beauty's understanding of customer sentiments and facilitating data-driven decision-making.
+Thank you for exploring our project repository. Feel free to navigate through the different sections to gain a comprehensive understanding of our methodologies and outcomes. 
+> If you have any questions or inquiries, please don't hesitate to reach out. <a href="https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/wiki#contributors">
+  <img src="https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/blob/main/assets/contact.png" alt="Contact Us" width="100">
 
-Thank you for exploring our project repository. Feel free to navigate through the different sections to gain a comprehensive understanding of our methodologies and outcomes. If you have any questions or inquiries, please don't hesitate to reach out. [Contact Us](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/wiki#contributors)
 
 ## Repository Structure<br />
 ├─ [assets/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/assets) _Contains multimedia resources, images, or other assets used in the project._<br />
@@ -35,5 +44,6 @@ Thank you for exploring our project repository. Feel free to navigate through th
 ├─ [References](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/wiki/References)<br />
 ├─ [Conclusions & Acknowledgments](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/wiki/Conclusions%E2%80%90Acknowledgments)<br />
 ├─ [Contributors](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/wiki#contributors)<br />
+<br />
 
-
+![lema](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/blob/main/assets/lema.png)
