@@ -27,6 +27,7 @@ Thank you for exploring our project repository. Feel free to navigate through th
 ├─ [datasets/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/datasets) _Stores datasets used in the project, organized into separate folders for CSV and parquet files._<br />
 │  ├─ [csv/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/datasets/csv)<br /> 
 │  ├─ [parquets/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/datasets/parquets)<br />
+├─ [diagrams/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/diagrams) _This folder contains diagrams and visual schematics related to the data pipeline. Explore graphical representations here that illustrate the architecture, process flows, and other relevant visual aspects of the project._<br /> 
 ├─ [docs/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/docs) _Contains essential documentation for the project such as: guidelines, generalities, evaluation criteria._<br />
 ├─ [notebooks/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/notebooks) _Here, you'll find Jupyter notebooks or other documents related to data exploration and analysis._<br />
 ├─ [videos/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/videos) _In this folder, files related to visual material are stored, such as tutorials, demonstrations, or any multimedia content in video format that is relevant to the project._<br />
@@ -44,5 +45,7 @@ Thank you for exploring our project repository. Feel free to navigate through th
 ├─ [Conclusions & Acknowledgments](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/wiki/Conclusions%E2%80%90Acknowledgments)<br />
 ├─ [Contributors](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/wiki#contributors)<br />
 <br />
+
+[README.md](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/blob/main/README.md)
 
 ![lema](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/blob/main/assets/lema.png)
