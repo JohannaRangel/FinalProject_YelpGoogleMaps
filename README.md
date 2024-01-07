@@ -21,7 +21,6 @@ Thank you for exploring our project repository. Feel free to navigate through th
 > If you have any questions or inquiries, please don't hesitate to reach out.<br /> 
 <a href="https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/wiki#contributors"><img src="https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/blob/main/assets/contact.png" alt="Contact Us" width="100">
 
-[![Contact Us](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/blob/main/assets/contact3.png)](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/wiki#contributors)
 ## Repository Structure<br />
 ├─ [assets/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/assets) _Contains multimedia resources, images, or other assets used in the project._<br />
 ├─ [dashboard/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/dashboard) _Includes files related to the creation and development of an interactive dashboard._<br />
