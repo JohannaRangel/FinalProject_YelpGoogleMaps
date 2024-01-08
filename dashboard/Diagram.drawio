@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2024-01-08T21:49:01.171Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" etag="QgsCfjBjlA05WjUE5z0j" version="22.1.17" type="github" pages="2">
+<mxfile host="app.diagrams.net" modified="2024-01-08T22:34:20.546Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" etag="hKqwKGoyqEy-e9wdjW6Z" version="22.1.17" type="github" pages="2">
   <diagram name="Page-1" id="c7488fd3-1785-93aa-aadb-54a6760d102a">
     <mxGraphModel dx="1034" dy="1296" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" background="none" math="0" shadow="0">
       <root>
@@ -151,7 +151,7 @@
     </mxGraphModel>
   </diagram>
   <diagram name="Copy of Page-1" id="B310GE8WHo3ex9GRjDIi">
-    <mxGraphModel dx="2134" dy="446" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" background="none" math="0" shadow="0">
+    <mxGraphModel dx="1927" dy="357" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" background="none" math="0" shadow="0">
       <root>
         <mxCell id="_cmQj0ziHUXawoMl8fKL-0" />
         <mxCell id="_cmQj0ziHUXawoMl8fKL-1" parent="_cmQj0ziHUXawoMl8fKL-0" />
@@ -173,8 +173,11 @@
         <mxCell id="_cmQj0ziHUXawoMl8fKL-6" value="&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-family: &amp;quot;Times New Roman&amp;quot;; background-color: initial;&quot;&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;Python using request to access and download data from the shared Drive.&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;shadow=0;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=8;align=center;" vertex="1" parent="_cmQj0ziHUXawoMl8fKL-3">
           <mxGeometry x="95" y="56.5" width="120" height="37" as="geometry" />
         </mxCell>
-        <mxCell id="2Y4eWPMmFIz3D6iTdAXj-0" value="&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-family: &amp;quot;Times New Roman&amp;quot;; background-color: initial;&quot;&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;Run pipeline.py to creace tables in BigQuery&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;shadow=0;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=8;align=center;" vertex="1" parent="_cmQj0ziHUXawoMl8fKL-3">
-          <mxGeometry x="590" y="53" width="120" height="37" as="geometry" />
+        <mxCell id="2Y4eWPMmFIz3D6iTdAXj-0" value="&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-family: &amp;quot;Times New Roman&amp;quot;; background-color: initial;&quot;&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;En Dataflow. Run pipeline.py to create tables in BigQuery&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;shadow=0;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=8;align=center;" vertex="1" parent="_cmQj0ziHUXawoMl8fKL-3">
+          <mxGeometry x="470" y="56.5" width="120" height="37" as="geometry" />
+        </mxCell>
+        <mxCell id="2Y4eWPMmFIz3D6iTdAXj-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="_cmQj0ziHUXawoMl8fKL-3" source="2Y4eWPMmFIz3D6iTdAXj-1" target="2Y4eWPMmFIz3D6iTdAXj-0">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="2Y4eWPMmFIz3D6iTdAXj-1" value="&lt;div style=&quot;&quot;&gt;&lt;font face=&quot;Times New Roman&quot;&gt;Create Cloud Storage&lt;/font&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;font face=&quot;Times New Roman&quot;&gt;(bucket)&lt;br&gt;&lt;/font&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;font face=&quot;Times New Roman&quot;&gt;pipeline.py&lt;/font&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;font face=&quot;Times New Roman&quot;&gt;Dockerfile&lt;/font&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;font face=&quot;Times New Roman&quot;&gt;contenedorprueba (imagen)&lt;/font&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;shadow=0;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=8;align=center;" vertex="1" parent="_cmQj0ziHUXawoMl8fKL-3">
           <mxGeometry x="280" y="56.5" width="120" height="37" as="geometry" />
