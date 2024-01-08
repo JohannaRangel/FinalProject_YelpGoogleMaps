@@ -5,13 +5,12 @@ from google.oauth2 import service_account
 import io
 
 url = 'https://drive.google.com/uc?id=1_itlZQHrvaUlcCbJs-iY9Rar9aovnDxs'
-credentials_path='c:\\Users\\p2_ge\\Downloads\\windy-tiger-410421-956bf231305a.json'
+credentials_path='windy-tiger-410421-956bf231305a.json'
 project_id = 'windy-tiger-410421'
 table_id = 'windy-tiger-410421.prueba1.tabla2'
 credentials =  service_account.Credentials.from_service_account_file(credentials_path, scopes = ['https://www.googleapis.com/auth/cloud-platform'])
 # Crear un cliente de BigQuery utilizando las credenciales
-client = bigquery.Client(credentials=credentials, project=credentials.project_id,)
-
+client = bigquery.Client(credentials=credentials, project=credentials.project_id)
 def cargar_dataset(file_url):
     response = requests.get(file_url)
     # Verificar si la solicitud fue exitosa (código de estado 200)
