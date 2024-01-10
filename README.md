@@ -30,7 +30,7 @@ Thank you for exploring our project repository. Feel free to navigate through th
 ├─ [diagrams/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/diagrams) _This folder contains diagrams and visual schematics related to the data pipeline. Explore graphical representations here that illustrate the architecture, process flows, and other relevant visual aspects of the project._<br /> 
 ├─ [docs/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/docs) _Contains essential documentation for the project such as: guidelines, generalities, evaluation criteria._<br />
 ├─ [notebooks/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/notebooks) _Here, you'll find Jupyter notebooks or other documents related to data exploration and analysis._<br />
-├─ [sources/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/sources) _This folder contains Python scripts and modules related to data processing, utilities, and backend functionality. If you're looking for the Jupyter notebooks or documents related to data exploration and analysis, check folder [notebooks/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/notebooks)._<br /> 
+├─ [sources/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/sources) _This folder contains Python scripts and modules related to data processing, utilities, and backend functionality. If you're looking for the Jupyter notebooks or documents related to data exploration and analysis, check folder notebooks._<br /> 
 ├─ [videos/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/videos) _In this folder, files related to visual material are stored, such as tutorials, demonstrations, or any multimedia content in video format that is relevant to the project._<br />
 
 **[Projects](https://github.com/users/JohannaRangel/projects/5)** _Displays project management and ongoing tasks._<br /> 
@@ -47,6 +47,6 @@ Thank you for exploring our project repository. Feel free to navigate through th
 ├─ [Contributors](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/wiki#contributors)<br />
 <br />
 
-[README.md](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/blob/main/README.md)
+**[README.md](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/blob/main/README.md)**
 
 ![lema](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/blob/main/assets/lema.png)
