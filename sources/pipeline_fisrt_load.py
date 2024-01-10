@@ -1,5 +1,4 @@
 import pandas as pd
-import requests
 from google.cloud import bigquery
 from google.oauth2 import service_account
 import gdown
@@ -19,13 +18,16 @@ def leer_archivo(ruta):
         return pd.read_json(ruta)
 # Función de limpieza y transformación de datos con Pandas
 
-def clean_and_transform(df):
-    df=df
-    # Realiza las operaciones de limpieza y transformación aquí
-    # Por ejemplo, df = df.dropna()
-    return df
 def etl_reviews_yelp(df):
 
+    return df
+
+def etl_business_Yelp(df):
+
+    return df
+
+def etl_reviews_Google(df):
+    
     return df
 
 def cargar_bigquery(df,table):
@@ -45,7 +47,8 @@ def run():
     dfbusinessYelp=pd.read_pickle('business_yelp.pkl')
 
     #aqui va el ETL business_yelp.pkl
-    dfbusinessYelp=etl_business(dfbusinessYelp)
+    dfbusinessYelp=etl_business_Yelp(dfbusinessYelp)
+
     #cargamos a bigquery
     cargar_bigquery(dfbusinessYelp,'tabla business')
     
@@ -61,6 +64,7 @@ def run():
 
     #descargamos el archivo reviews yelp al directorio local
     download_file('1byFtzpZXopdCN-XYmMHMpZqzgAqfQBBu','review_yelp.json')
+
     #usaremos chunks para procesar este archivo, debido al peso que este tiene, para no tener fallos en la memoria
     chunk_size = 1000
 
@@ -86,7 +90,7 @@ def run():
         dfbusinesGoogle=pd.read_json(ruta,lines=True)
 
     # hacemos las transformaciones paa cada json de metadata de google
-        dfbusinessGoogle=ETL(dfbusinessGoogle)
+        dfbusinessGoogle=etl_business_Yelp(dfbusinessGoogle)
 
     #cargamos a bigquery
         cargar_bigquery(dfbusinessGoogle,'negocios google')
@@ -119,7 +123,13 @@ def run():
             'Washington':'1y6MqAZNUmOW8zXArm_-UEq38Ej-0vp7a','West-Virginia':'1ffuT8ch4UPQ2Hz71TNGC3bKlfkfCv1cy',
             'Wisconsin':'1KednQoExNw-pq9uZGLxNEdVEV3NRJXJX','Wyoming':'1XBl_mEvdaSt2K_4TOebIArrm4smnv-im'}
     for a in folders_id.keys():
-        download_folder(folders_id[a])
+        download_folder(a,folders_id[a])
+        for b in os.listdir(a):
+            dfestado=pd.read_json(a+'//'+b,lines=True)
+            dfestado=etl_reviews_Google(dfestado)
+            cargar_bigquery(dfestado,'Reviews_Google')
+            del dfestado
+        os.remove(a)
         
 
 #def run(url): #,table_id,client
@@ -131,4 +141,4 @@ def run():
 
 if __name__ == '__main__':
     #run(url,table_id,client)
-    run(url)
+    run()
