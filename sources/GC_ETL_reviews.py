@@ -37,6 +37,9 @@ dfreviewsGoogle['year'] = dfreviewsGoogle['time'].dt.year
 dfreviewsGoogle['hour'] = dfreviewsGoogle['time'].dt.hour
 dfreviewsGoogle.drop(columns=['time'],inplace=True)
 
+# Filtrar las filas para los años 2019, 2020 y 2021
+dfreviewsGoogle = dfreviewsGoogle[(dfreviewsGoogle['year'] == 2019) | (dfreviewsGoogle['year'] == 2020) | (dfreviewsGoogle['year'] == 2021)]
+
 #Renombrar las columnas
 dfreviewsGoogle = dfreviewsGoogle.rename(columns={'gmap_id': 'business_id', 'rating': 'stars'})
 
