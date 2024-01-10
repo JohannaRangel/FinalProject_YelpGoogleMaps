@@ -23,6 +23,11 @@ def etl_reviews_yelp(df):
     return df
 
 def etl_business_Yelp(df):
+
+    return df
+
+def etl_reviews_Google(df):
+    
     return df
 
 def cargar_bigquery(df,table):
@@ -118,7 +123,13 @@ def run():
             'Washington':'1y6MqAZNUmOW8zXArm_-UEq38Ej-0vp7a','West-Virginia':'1ffuT8ch4UPQ2Hz71TNGC3bKlfkfCv1cy',
             'Wisconsin':'1KednQoExNw-pq9uZGLxNEdVEV3NRJXJX','Wyoming':'1XBl_mEvdaSt2K_4TOebIArrm4smnv-im'}
     for a in folders_id.keys():
-        download_folder(folders_id[a])
+        download_folder(a,folders_id[a])
+        for b in os.listdir(a):
+            dfestado=pd.read_json(a+'//'+b,lines=True)
+            dfestado=etl_reviews_Google(dfestado)
+            cargar_bigquery(dfestado,'Reviews_Google')
+            del dfestado
+        os.remove(a)
         
 
 #def run(url): #,table_id,client
