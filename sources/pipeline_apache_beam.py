@@ -15,7 +15,7 @@ def download_folder(id,nombre):
     gdown.download_folder(id=id,output=nombre)
 
 def etl_business_yelp(df):
-    #codigo etl
+    
     return df
 
 def etl_reviews_yelp(df):
@@ -72,7 +72,7 @@ def run():
         #ETL business Yelp
         # Descarga archivo business.pkl
         download_file('1byFtzpZXopdCN-XYmMHMpZqzgAqfQBBu', 'business_yelp.pkl')
-        df_business_yelp=pd.read_pickle
+        df_business_yelp=pd.read_pickle('business_yelp.pkl')
 
         # Lee el archivo en un PCollection
         pcoll_business_yelp = p | 'Read Yelp Business Data' >> beam.io.ReadFromPandas(df_business_yelp)
@@ -87,7 +87,7 @@ def run():
 
         #ETL reviews Yelp
         #descargamos el archivo en local
-        download_file('1byFtzpZXopdCN-XYmMHMpZqzgAqfQBBu','reviews_yelp')
+        download_file('1byFtzpZXopdCN-XYmMHMpZqzgAqfQBBu','reviews_yelp.json')
 
         # Lee el archivo en un PCollection
         pcoll_business_yelp = p | 'Read Yelp Business Data' >> beam.io.ReadFromText('reviews_yelp.json')
