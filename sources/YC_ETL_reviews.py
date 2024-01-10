@@ -28,7 +28,7 @@ dfreviewsYelp.drop(columns=['date'],inplace=True)
 
 #Filtramos los años a partir del 2019
 
-dfreviewsYelp = dfreviewsYelp[dfreviewsYelp['year'] >= 2019]
+dfreviewsYelp = dfreviewsYelp[(dfreviewsYelp['year'] >= 2019) & (dfreviewsYelp['year'] <= 2021)]
 
 # Convertimos la columna texto a minuscula y quitamos los caracteres especiales
 
