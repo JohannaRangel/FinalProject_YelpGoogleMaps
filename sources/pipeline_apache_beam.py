@@ -371,34 +371,33 @@ class ProcessFileDoFn(beam.DoFn):
 
         # Convierte el DataFrame resultante a una lista de diccionarios
         yield df_result.to_dict(orient='records')
-def writetobigquery(pcoll_transformed,nombre_tabla,options):
+def writetobigquery(pcoll_transformed,nombre_tabla):
     pcoll_transformed| 'Write to BigQuery' >> WriteToBigQuery(
-            table='windy-tiger-410421.UltaBeautyReviews.'+nombre_tabla,
+            table=nombre_tabla,
             dataset='UltaBeautyReviews',
             project='windy-tiger-410421',
             create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
             write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND,
             method='STREAMING_INSERTS',  # Puedes ajustar el método de escritura según tus necesidades
             insert_retry_strategy='RETRY_TRANSIENT_ERRORS',  # Ajusta la estrategia de reintento según tus necesidades
-            gcs_location=options.temp_location,
+            custom_gcs_temp_location='gs://ultabeauty/tmp'
         )
 
-
 def run():
-    options = PipelineOptions(
-        runner='DataflowRunner',
+    options=PipelineOptions(
+        runner='DataflowRunner',  #' Ejemplo: especificando el runner
         project='windy-tiger-410421',
-        #creaer un bucket temporal antes de ejecutar
-        temp_location='gs://mi-bucket-temporal/tmp'
-    )
-    # Crea y configura el pipeline de Apache Beam
+        custom_gcs_temp_location='gs://ultabeauty/tmp',
+        region='us-central1',
+        runner='DataflowRunner')
+        # Crea y configura el pipeline de Apache Beam
     with beam.Pipeline(options=options) as p:
 
         #ETL business Yelp
         # Descarga archivo business.pkl
         download_file('1byFtzpZXopdCN-XYmMHMpZqzgAqfQBBu', 'business_yelp.pkl')
         df_business_yelp=pd.read_pickle('business_yelp.pkl')
-        df_business_yelp.to_json('business_yelp.json',orient='records',lines=True)
+        df_business_yelp.iloc[:,0:14].to_json('business_yelp.json',orient='records',lines=True)
         os.remove('business_yelp.pkl')
         # Lee el archivo en un PCollection
         pcoll_business_yelp = p | 'Read Yelp Business Data' >> beam.io.ReadFromText('business_yelp.json')
@@ -406,7 +405,7 @@ def run():
             pcoll_business_yelp
             | 'Apply Pandas Transformation' >> beam.ParDo(PandasTransform(etl_business_yelp))
         )
-        writetobigquery(pcoll_business_yelp_transformed,'yelp_business_data',options)
+        writetobigquery(pcoll_business_yelp_transformed,'yelp_business_data')
 
         # Borra el archivo descargado
         os.remove('business_yelp.json')
@@ -424,7 +423,7 @@ def run():
         )
 
         # Escribir a BigQuery
-        writetobigquery(pcoll_business_yelp_transformed, 'yelp_reviews_ulta_beauty',options)
+        writetobigquery(pcoll_business_yelp_transformed, 'yelp_reviews_ulta_beauty')
 
         # Borra el archivo descargado
         os.remove('business_yelp.json')
@@ -441,7 +440,7 @@ def run():
             | 'Get Local File Path' >> beam.Map(lambda file_name: os.path.join(local_input_path, file_name))
             | 'Read and Process Local Files' >> beam.ParDo(ProcessFileDoFn(), etl_function=etl_business_google)
         )
-        writetobigquery(pcoll_business_google,'google_business_data',options)
+        writetobigquery(pcoll_business_google,'google_business_data')
         os.remove('google_business_data')
 
         #ETL reviews Google
@@ -478,7 +477,7 @@ def run():
                 | 'Get Local File Path' >> beam.Map(lambda file_name: os.path.join(local_input_path, file_name))
                 | 'Read and Process Local Files' >> beam.ParDo(ProcessFileDoFn(), etl_function=etl_reviews_google)
             )
-            writetobigquery(pcoll_reviews_google,'google_reviews_ulta_beauty',options)
+            writetobigquery(pcoll_reviews_google,'google_reviews_ulta_beauty')
             os.remove(a)
 
 if __name__ == '__main__':
