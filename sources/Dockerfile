@@ -4,7 +4,7 @@ FROM python:3.11.6
 RUN pip install google-cloud-bigquery
 RUN pip install pandas
 RUN pip install pyarrow
-RUN pip install apache-beam
+RUN pip install apache-beam==2.43.0
 RUN pip install gdown
 RUN pip install geopy
 

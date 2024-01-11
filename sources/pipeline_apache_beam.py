@@ -1,62 +1,65 @@
 import apache_beam as beam
-from apache_beam.io.gcp.bigquery import WriteToBigQuery
+from apache_beam.io import WriteToBigQuery
 from apache_beam.options.pipeline_options import PipelineOptions
 import pandas as pd
 import gdown
 import os
 from geopy.geocoders import Nominatim
-from datetime import datetime
 import re
+from googleapiclient.discovery import build
+from google.oauth2 import service_account
+from googleapiclient.http import MediaIoBaseDownload
 
 #función para descargar los datos de los negocios de Yelp
 def download_file(id,nombre):
-    url='https://drive.google.com/uc?id='+id
-    gdown.download(url, output=nombre)
+    SCOPES= ['https://www.googleapis.com/auth/drive']
+    service_account_file='service_account.json'
+    creds=service_account.Credentials.from_service_account_file(service_account_file,scopes=SCOPES)
+    service=build('drive','v3',credentials=creds)
+    request = service.files().get_media(fileId=id)
+    fh = open(nombre,'wb')
+    downloader = MediaIoBaseDownload(fh, request)
+    done=False
+    while done is False:
+        status, done = downloader.next_chunk()
+    # Cierra el archivo local
+    fh.close()
+
+def folders(id_folder):
+    SCOPES= ['https://www.googleapis.com/auth/drive']
+    service_account_file='service_account.json'
+    creds=service_account.Credentials.from_service_account_file(service_account_file,scopes=SCOPES)
+    service=build('drive','v3',credentials=creds)
+    results = service.files().list(q=f"'{id_folder}' in parents",
+                                    fields="files(id, name)").execute()
+    files = results.get('files', [])
+    return files
+
 #funcion para descargar un folder con archvios de google drive
-def download_folder(id,nombre):
-    gdown.download_folder(id=id,output=nombre)
+def ids_folder(folder_id):
+    SCOPES= ['https://www.googleapis.com/auth/drive']
+    service_account_file='service_account.json'
+    creds=service_account.Credentials.from_service_account_file(service_account_file,scopes=SCOPES)
+    service=build('drive','v3',credentials=creds)
+    ids=service.files().list(
+        q=f"'{folder_id}' in parents and mimeType != 'application/vnd.google-apps.folder'",
+        pageSize=1000,  # Puedes ajustar este valor según sea necesario
+        fields="files(id)"
+        ).execute()['files']
+    ids=[a['id'] for a in ids]
+    return ids
 
 def etl_business_yelp(dfbusinessYelp):
-
+    
     #Filtrado de los datos para tener solamente ulta beauty 
+
     dfbusinessYelp = dfbusinessYelp.loc[:, ~dfbusinessYelp.columns.duplicated()]
     dfbusinessYelp = dfbusinessYelp[dfbusinessYelp['name'] == 'Ulta Beauty']
 
     #Borrar columnas irrelevantes para el proyecto
 
-    columns_to_drop = ['is_open', 'address', 'name', 'categories','BusinessParking','RestaurantsPriceRange2']
+    columns_to_drop = ['is_open', 'address', 'name', 'categories','BusinessParking','RestaurantsPriceRange2','attributes','hours']
     dfbusinessYelp = dfbusinessYelp.drop(columns=columns_to_drop, axis=1)
-
-    # Expandir el diccionario en la columna 'attributes'
-    def expandir_attributes(row):
-        if row['attributes']:
-            return pd.Series(row['attributes'])
-        else:
-            return pd.Series()
-    df_expandido = dfbusinessYelp.apply(expandir_attributes, axis=1)
-    df_resultado = pd.concat([dfbusinessYelp, df_expandido], axis=1)
-    dfbusinessYelp = df_resultado.drop('attributes', axis=1)
-
-    # Expandir el diccionario en la columna 'hour'
-    def expandir_hour(row):
-        if row['hours']:
-            hour_dict = row['hours']
-            expanded_dict = {}
-            for day, time_range in hour_dict.items():
-                expanded_dict[f'hours_{day}'] = time_range
-            return pd.Series(expanded_dict)
-        else:
-            return pd.Series()
-
-    df_expandido_hour = dfbusinessYelp.apply(expandir_hour, axis=1)
-    df_resultado = pd.concat([dfbusinessYelp, df_expandido_hour], axis=1)
-    dfbusinessYelp = df_resultado.drop('hours', axis=1)
-
-    #Quitamos columnas con muchos nulos 
-    dfbusinessYelp.drop(columns=['DogsAllowed','WheelchairAccessible','WiFi','GoodForKids'],inplace=True)
-
-    #Rellenamos los nulos
-    dfbusinessYelp[['BikeParking', 'BusinessAcceptsCreditCards', 'ByAppointmentOnly']] = dfbusinessYelp[['BikeParking', 'BusinessAcceptsCreditCards', 'ByAppointmentOnly']].fillna('False')
 
     #Cambio de nombre de las columnas
     def snake_case(column_name):
@@ -108,14 +111,6 @@ def etl_business_yelp(dfbusinessYelp):
         else:
             sindato+=1
             continue
-
-    #Normalización de la columna horas 
-    def convertir_formato_horas(rango_horas):
-        hora_inicio, hora_fin = map(lambda x: datetime.strptime(x, "%H:%M"), rango_horas.split('-'))
-        return f"{hora_inicio.strftime('%H:%M')} - {hora_fin.strftime('%H:%M')}"
-    columnas_dias_semana = [col for col in dfbusinessYelp.columns if col.startswith('hours_')]
-    for columna in columnas_dias_semana:
-        dfbusinessYelp[columna] = dfbusinessYelp[columna].apply(convertir_formato_horas)
 
     #Agregamos la columna source
     dfbusinessYelp['source']='Y'
@@ -379,7 +374,7 @@ def writetobigquery(pcoll_transformed,nombre_tabla):
             create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
             write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND,
             method='STREAMING_INSERTS',  # Puedes ajustar el método de escritura según tus necesidades
-            insert_retry_strategy='RETRY_TRANSIENT_ERRORS',  # Ajusta la estrategia de reintento según tus necesidades
+            #insert_retry_strategy='RETRY_TRANSIENT_ERRORS',  # Ajusta la estrategia de reintento según tus necesidades
             custom_gcs_temp_location='gs://ultabeauty/tmp'
         )
 
@@ -388,8 +383,7 @@ def run():
         runner='DataflowRunner',  #' Ejemplo: especificando el runner
         project='windy-tiger-410421',
         custom_gcs_temp_location='gs://ultabeauty/tmp',
-        region='us-central1',
-        runner='DataflowRunner')
+        region='us-central1',)
         # Crea y configura el pipeline de Apache Beam
     with beam.Pipeline(options=options) as p:
 
@@ -405,45 +399,56 @@ def run():
             pcoll_business_yelp
             | 'Apply Pandas Transformation' >> beam.ParDo(PandasTransform(etl_business_yelp))
         )
-        writetobigquery(pcoll_business_yelp_transformed,'yelp_business_data')
+        writetobigquery(pcoll_business_yelp_transformed,'windy-tiger-410421.UltaBeautyReviews.yelp_business_data')
 
         # Borra el archivo descargado
         os.remove('business_yelp.json')
 
         #ETL reviews Yelp
         #descargamos el archivo en local
-        download_file('1byFtzpZXopdCN-XYmMHMpZqzgAqfQBBu','reviews_yelp.json')
+        download_file('1byFtzpZXopdCN-XYmMHMpZqzgAqfQBBu','reviews_yelp')
 
         # Lee el archivo en un PCollection
-        pcoll_business_yelp = p | 'Read Yelp Business Data' >> beam.io.ReadFromText('reviews_yelp.json')
+        pcoll_reviews_yelp = p | 'Read Yelp Business Data' >> beam.io.ReadFromText('reviews_yelp.json')
         
-        pcoll_business_yelp_transformed = (
-            pcoll_business_yelp
+        pcoll_reviews_yelp_transformed = (
+            pcoll_reviews_yelp
             | 'Apply Pandas Transformation' >> beam.ParDo(PandasTransform(etl_reviews_yelp))
         )
 
         # Escribir a BigQuery
-        writetobigquery(pcoll_business_yelp_transformed, 'yelp_reviews_ulta_beauty')
+        writetobigquery(pcoll_reviews_yelp_transformed, 'windy-tiger-410421.UltaBeautyReviews.yelp_reviews_ulta_beauty')
 
         # Borra el archivo descargado
         os.remove('business_yelp.json')
 
         #ETL metadata business Google
 
-        download_folder('1olnuKLjT8W2QnCUUwh8uDuTTKVZyxQ0Z','metadata_google')
+        list_ids=ids_folder('1olnuKLjT8W2QnCUUwh8uDuTTKVZyxQ0Z')
+        for a in list_ids:
+            download_file(a,'metadata_google.json')
          
-        # Dentro del bloque 'with beam.Pipeline(options=options) as p:'
-        local_input_path = 'metadata_google'
-        pcoll_business_google = (
-            p
-            | 'List Local Files' >> beam.Create(os.listdir(local_input_path))
-            | 'Get Local File Path' >> beam.Map(lambda file_name: os.path.join(local_input_path, file_name))
-            | 'Read and Process Local Files' >> beam.ParDo(ProcessFileDoFn(), etl_function=etl_business_google)
-        )
-        writetobigquery(pcoll_business_google,'google_business_data')
-        os.remove('google_business_data')
+            pcoll_business_google = p | 'Read Google metadata Data' >> beam.io.ReadFromText('metadata_google.json')
+        
+            pcoll_business_google_transformed = (
+                pcoll_business_google
+                | 'Apply Pandas Transformation' >> beam.ParDo(PandasTransform(etl_business_google))
+                )
+
+            """# Dentro del bloque 'with beam.Pipeline(options=options) as p:'
+            local_input_path = 'metadata_google'
+            pcoll_business_google = (
+                p
+                | 'List Local Files' >> beam.Create(os.listdir())
+                | 'Get Local File Path' >> beam.Map(lambda file_name: os.path.join(local_input_path, file_name))
+                | 'Read and Process Local Files' >> beam.ParDo(ProcessFileDoFn(), etl_function=etl_business_google)
+            )"""
+            writetobigquery(pcoll_business_google_transformed,'windy-tiger-410421.UltaBeautyReviews.google_business_data')
+            os.remove('metadata_google.json')
 
         #ETL reviews Google
+            
+        
 
         #descargamos cada carpeta por estado, hacemos el ETL de cada carpeta y guardamos en bigquery
         folders_id={'Alabama':'1d8qkSNSvIioGxQGywN0GE_HDIqYB2ZZv','Alaska':'1pgC5X_XObV0g4-Mli3J7eoglzhNNJa5o','Arizona':'1-w20axtXbCNNai7jc4NYyDJf7vW7q2wV',
@@ -465,20 +470,27 @@ def run():
                 'Utah':'1ll2VZUERIaAQyngnfiF0VSsg2WqxQqWN','Vermont':'1RF-zTyWPPi1DWHVYR4LSqyknFMAcxuo3','Virginia':'1OV8FeeuiYHmIIpMVitliFO_w4XLK1pXi',
                 'Washington':'1y6MqAZNUmOW8zXArm_-UEq38Ej-0vp7a','West-Virginia':'1ffuT8ch4UPQ2Hz71TNGC3bKlfkfCv1cy',
                 'Wisconsin':'1KednQoExNw-pq9uZGLxNEdVEV3NRJXJX','Wyoming':'1XBl_mEvdaSt2K_4TOebIArrm4smnv-im'}
-        for a in folders_id.keys():
+        folders_list=folders('19QNXr_BcqekFNFNYlKd0kcTXJ0Zg7lI6')
+        for a in folders_list:
+            folders_list2=folders(a['id'])
+            for b in folders_list2:
+                download_file(b['id'],a['name'].split('-')[1]+'.json')
+                pcoll_reviews_google = p | 'Read Google metadata Data' >> beam.io.ReadFromText(a['name'].split('-')[1]+'.json')    
+                pcoll_reviews_google_transformed = (
+                    pcoll_reviews_google
+                    | 'Apply Pandas Transformation' >> beam.ParDo(PandasTransform(etl_reviews_google))
+                    )
 
-            download_folder(folders_id[a],a)
-            
-            # Dentro del bloque 'with beam.Pipeline(options=options) as p:'
-            local_input_path = a
-            pcoll_reviews_google = (
-                p
-                | 'List Local Files' >> beam.Create(os.listdir(local_input_path))
-                | 'Get Local File Path' >> beam.Map(lambda file_name: os.path.join(local_input_path, file_name))
-                | 'Read and Process Local Files' >> beam.ParDo(ProcessFileDoFn(), etl_function=etl_reviews_google)
-            )
-            writetobigquery(pcoll_reviews_google,'google_reviews_ulta_beauty')
-            os.remove(a)
+                """# Dentro del bloque 'with beam.Pipeline(options=options) as p:'
+                local_input_path = a
+                pcoll_reviews_google = (
+                    p
+                    | 'List Local Files' >> beam.Create(os.listdir(local_input_path))
+                    | 'Get Local File Path' >> beam.Map(lambda file_name: os.path.join(local_input_path, file_name))
+                    | 'Read and Process Local Files' >> beam.ParDo(ProcessFileDoFn(), etl_function=etl_reviews_google)
+                )"""
+                writetobigquery(pcoll_reviews_google_transformed,'windy-tiger-410421.UltaBeautyReviews.google_reviews_ulta_beauty')
+                os.remove(a)
 
 if __name__ == '__main__':
     run()
