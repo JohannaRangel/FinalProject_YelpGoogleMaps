@@ -28,39 +28,10 @@ dfbusinessYelp = dfbusinessYelp[dfbusinessYelp['name'] == 'Ulta Beauty']
 
 #Borrar columnas irrelevantes para el proyecto
 
-columns_to_drop = ['is_open', 'address', 'name', 'categories','BusinessParking','RestaurantsPriceRange2']
+columns_to_drop = ['is_open', 'address', 'name', 'categories','BusinessParking','RestaurantsPriceRange2','attributes','hours']
 dfbusinessYelp = dfbusinessYelp.drop(columns=columns_to_drop, axis=1)
 
-# Expandir el diccionario en la columna 'attributes'
-def expandir_attributes(row):
-    if row['attributes']:
-        return pd.Series(row['attributes'])
-    else:
-        return pd.Series()
-df_expandido = dfbusinessYelp.apply(expandir_attributes, axis=1)
-df_resultado = pd.concat([dfbusinessYelp, df_expandido], axis=1)
-dfbusinessYelp = df_resultado.drop('attributes', axis=1)
 
-# Expandir el diccionario en la columna 'hour'
-def expandir_hour(row):
-    if row['hours']:
-        hour_dict = row['hours']
-        expanded_dict = {}
-        for day, time_range in hour_dict.items():
-            expanded_dict[f'hours_{day}'] = time_range
-        return pd.Series(expanded_dict)
-    else:
-        return pd.Series()
-
-df_expandido_hour = dfbusinessYelp.apply(expandir_hour, axis=1)
-df_resultado = pd.concat([dfbusinessYelp, df_expandido_hour], axis=1)
-dfbusinessYelp = df_resultado.drop('hours', axis=1)
-
-#Quitamos columnas con muchos nulos 
-dfbusinessYelp.drop(columns=['DogsAllowed','WheelchairAccessible','WiFi','GoodForKids'],inplace=True)
-
-#Rellenamos los nulos
-dfbusinessYelp[['BikeParking', 'BusinessAcceptsCreditCards', 'ByAppointmentOnly']] = dfbusinessYelp[['BikeParking', 'BusinessAcceptsCreditCards', 'ByAppointmentOnly']].fillna('False')
 
 #Cambio de nombre de las columnas
 def snake_case(column_name):
@@ -112,14 +83,6 @@ for a in range(len(faltantes)):
     else:
         sindato+=1
         continue
-
-#Normalización de la columna horas 
-def convertir_formato_horas(rango_horas):
-    hora_inicio, hora_fin = map(lambda x: datetime.strptime(x, "%H:%M"), rango_horas.split('-'))
-    return f"{hora_inicio.strftime('%H:%M')} - {hora_fin.strftime('%H:%M')}"
-columnas_dias_semana = [col for col in dfbusinessYelp.columns if col.startswith('hours_')]
-for columna in columnas_dias_semana:
-    dfbusinessYelp[columna] = dfbusinessYelp[columna].apply(convertir_formato_horas)
 
 #Agregamos la columna source
 dfbusinessYelp['source']='Y'
