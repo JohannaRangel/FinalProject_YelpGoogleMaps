@@ -4,10 +4,10 @@ FROM python:3.11.6
 RUN pip install google-cloud-bigquery
 RUN pip install pandas
 RUN pip install pyarrow
-RUN pip install apache-beam
-RUN pip install gdown
+RUN pip install apache-beam==2.43.0
 RUN pip install geopy
-
+RUN pip install google-cloud-bigquery
+RUN pip install polars
 # Copiar tu script al contenedor
 COPY pipeline_apache_beam.py /dataflow/
 COPY windy-tiger-410421-956bf231305a.json /dataflow/
