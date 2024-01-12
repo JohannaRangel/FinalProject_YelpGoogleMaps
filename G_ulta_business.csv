@@ -1,0 +1,4 @@
+,business_id,city,state,postal_code,latitude,longitude,stars,review_count,source
+50081,0x89e6d16cb7a055d1:0xd4c12cb7d2dea352,hadley,massachusetts,01035,42.353834,-72.55335199999999,4.6,5,G
+157315,0x8626b5c18a472f51:0xf76988396c99cad,gonzales,LA,70737,30.2320744,-90.90980569999999,4.2,30,G
+231865,0x8640c7cb4370df9b:0x7b80fe395f38c50e,houston,texas,77092,29.8096489,-95.4540792,3.9,16,G
