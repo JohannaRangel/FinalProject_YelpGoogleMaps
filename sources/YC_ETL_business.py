@@ -28,7 +28,7 @@ dfbusinessYelp = dfbusinessYelp[dfbusinessYelp['name'] == 'Ulta Beauty']
 
 #Borrar columnas irrelevantes para el proyecto
 
-columns_to_drop = ['is_open', 'address', 'name', 'categories','BusinessParking','RestaurantsPriceRange2','attributes','hours']
+columns_to_drop = ['is_open', 'address', 'name', 'categories','attributes','hours']
 dfbusinessYelp = dfbusinessYelp.drop(columns=columns_to_drop, axis=1)
 
 
