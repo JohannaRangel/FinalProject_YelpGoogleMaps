@@ -2,13 +2,13 @@ import apache_beam as beam
 from apache_beam.io import WriteToBigQuery
 from apache_beam.options.pipeline_options import PipelineOptions
 import pandas as pd
-import gdown
 import os
 from geopy.geocoders import Nominatim
 import re
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from googleapiclient.http import MediaIoBaseDownload
+from google.cloud import bigquery
 
 #función para descargar los datos de los negocios de Yelp
 def download_file(id,nombre):
@@ -48,6 +48,13 @@ def ids_folder(folder_id):
         ).execute()['files']
     ids=[a['id'] for a in ids]
     return ids
+
+def writetobigquery(df,table_id):
+    credentials_path='service_account.json'
+    credentials =  service_account.Credentials.from_service_account_file(credentials_path, scopes = ['https://www.googleapis.com/auth/cloud-platform'])
+    client = bigquery.Client(credentials=credentials, project=credentials.project_id)
+    job_config0 = bigquery.LoadJobConfig(write_disposition = 'WRITE_APPEND')
+    job = client.load_table_from_dataframe(df, table_id, job_config=job_config0)
 
 def etl_business_yelp(dfbusinessYelp):
     
@@ -114,8 +121,8 @@ def etl_business_yelp(dfbusinessYelp):
 
     #Agregamos la columna source
     dfbusinessYelp['source']='Y'
-
-    return dfbusinessYelp
+    writetobigquery(dfbusinessYelp,'windy-tiger-410421.UltaBeautyReviews.yelp_business_data')
+    del dfbusinessYelp
 
 def etl_reviews_yelp(dfreviewsYelp):
 
@@ -164,8 +171,8 @@ def etl_reviews_yelp(dfreviewsYelp):
     #Agregamos la columna source 
     dfreviewsYelp['source']='Y'
 
-
-    return dfreviewsYelp
+    writetobigquery(dfreviewsYelp,'windy-tiger-410421.UltaBeautyReviews.yelp_reviews_ulta_beauty')
+    del dfreviewsYelp
 
 def etl_business_google(dfbusinessGoogle):
     
@@ -219,7 +226,8 @@ def etl_business_google(dfbusinessGoogle):
     dfbusinessGoogle['source']="G"
 
 
-    return dfbusinessGoogle
+    writetobigquery(dfbusinessGoogle,'windy-tiger-410421.UltaBeautyReviews.google_business_data')
+    del dfbusinessGoogle
 
 def etl_reviews_google(df):
     business_ids_to_keep = ['0x80e849691015d7b7:0x314b8627656bc6d5','0x89e7ad0b7da12a11:0x2cab11e09a406d3a','0x89c2d130d433cc0b:0xb550e43a7ce3540',
@@ -303,6 +311,8 @@ def etl_reviews_google(df):
                             '0x80dd4b91504c62b1:0xb3cc9dca79aa311d','0x883ef3a61fd8283b:0x8e94dd5107d09edc','0x87b6f1e3d067ff7d:0x11d955f4a804eb54',
                             '0x87df2abea993cd4f:0xf937b38a41d537bc','0x80dd2e536f430ea9:0xb56fc5d02329aa45','0x89e6778725d32203:0xe5f89de21172ad5e',
                             '0x89c4727e09899fd1:0x5e9a64ab3765ec2','0x89e405bbeed21f7f:0xfa1bae7dae7677d2','0x89acf761a874832d:0x111803f8757a81e0']
+    
+    dfreviewsGoogle=df
     dfreviewsGoogle = dfreviewsGoogle[dfreviewsGoogle['gmap_id'].isin(business_ids_to_keep)]
 
     #Borrar columnas inecesarias
@@ -345,12 +355,13 @@ def etl_reviews_google(df):
 
     #Agregamos la columna source 
     dfreviewsGoogle['source']='G'
+    dfreviewsGoogle['user_id']=dfreviewsGoogle['user_id'].astype('str')
+    writetobigquery(dfreviewsGoogle,'windy-tiger-410421.UltaBeautyReviews.google_reviews_ulta_beauty')
+    del dfreviewsGoogle
 
     
 
-    return df
-
-class PandasTransform(beam.DoFn):
+"""class PandasTransform(beam.DoFn):
     def process(self, element,funcion_etl):
         # Aplica tu lógica de transformación con Pandas aquí
         df = pd.DataFrame([element])
@@ -365,18 +376,19 @@ class ProcessFileDoFn(beam.DoFn):
         yield df_result.to_dict(orient='records')
 
         # Convierte el DataFrame resultante a una lista de diccionarios
-        yield df_result.to_dict(orient='records')
-def writetobigquery(pcoll_transformed,nombre_tabla):
+        yield df_result.to_dict(orient='records')"""
+
+"""def writetobigquery2(pcoll_transformed,nombre_tabla):
     pcoll_transformed| 'Write to BigQuery' >> WriteToBigQuery(
-            table=nombre_tabla,
-            dataset='UltaBeautyReviews',
-            project='windy-tiger-410421',
-            create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
-            write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND,
-            method='STREAMING_INSERTS',  # Puedes ajustar el método de escritura según tus necesidades
-            #insert_retry_strategy='RETRY_TRANSIENT_ERRORS',  # Ajusta la estrategia de reintento según tus necesidades
-            custom_gcs_temp_location='gs://ultabeauty/tmp'
-        )
+        table=nombre_tabla,
+        dataset='UltaBeautyReviews',
+        project='windy-tiger-410421',
+        create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
+        write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND,
+        method='STREAMING_INSERTS',  # Puedes ajustar el método de escritura según tus necesidades
+        #insert_retry_strategy='RETRY_TRANSIENT_ERRORS',  # Ajusta la estrategia de reintento según tus necesidades
+        custom_gcs_temp_location='gs://ultabeauty/tmp'
+        )"""
 
 def run():
     options=PipelineOptions(
@@ -391,49 +403,46 @@ def run():
         # Descarga archivo business.pkl
         download_file('1byFtzpZXopdCN-XYmMHMpZqzgAqfQBBu', 'business_yelp.pkl')
         df_business_yelp=pd.read_pickle('business_yelp.pkl')
-        df_business_yelp.iloc[:,0:14].to_json('business_yelp.json',orient='records',lines=True)
+        etl_business_yelp(df_business_yelp)
         os.remove('business_yelp.pkl')
         # Lee el archivo en un PCollection
-        pcoll_business_yelp = p | 'Read Yelp Business Data' >> beam.io.ReadFromText('business_yelp.json')
+        """pcoll_business_yelp = p | 'Read Yelp Business Data' >> beam.io.ReadFromText('business_yelp.json')
         pcoll_business_yelp_transformed = (
             pcoll_business_yelp
             | 'Apply Pandas Transformation' >> beam.ParDo(PandasTransform(etl_business_yelp))
         )
-        writetobigquery(pcoll_business_yelp_transformed,'windy-tiger-410421.UltaBeautyReviews.yelp_business_data')
+        writetobigquery(pcoll_business_yelp_transformed,'yelp_business_data')"""
 
         # Borra el archivo descargado
-        os.remove('business_yelp.json')
 
         #ETL reviews Yelp
         #descargamos el archivo en local
-        download_file('1byFtzpZXopdCN-XYmMHMpZqzgAqfQBBu','reviews_yelp')
-
-        # Lee el archivo en un PCollection
+        download_file('1byFtzpZXopdCN-XYmMHMpZqzgAqfQBBu','reviews_yelp.json')
+        
+        
+        """# Lee el archivo en un PCollection
         pcoll_reviews_yelp = p | 'Read Yelp Business Data' >> beam.io.ReadFromText('reviews_yelp.json')
         
         pcoll_reviews_yelp_transformed = (
             pcoll_reviews_yelp
             | 'Apply Pandas Transformation' >> beam.ParDo(PandasTransform(etl_reviews_yelp))
-        )
-
-        # Escribir a BigQuery
-        writetobigquery(pcoll_reviews_yelp_transformed, 'windy-tiger-410421.UltaBeautyReviews.yelp_reviews_ulta_beauty')
+        )"""
 
         # Borra el archivo descargado
-        os.remove('business_yelp.json')
+        os.remove('reviews_yelp.json')
 
         #ETL metadata business Google
 
         list_ids=ids_folder('1olnuKLjT8W2QnCUUwh8uDuTTKVZyxQ0Z')
         for a in list_ids:
             download_file(a,'metadata_google.json')
-         
-            pcoll_business_google = p | 'Read Google metadata Data' >> beam.io.ReadFromText('metadata_google.json')
+            etl_business_google(pd.read_json('metadata_google.json',lines=True))
+            """pcoll_business_google = p | 'Read Google metadata Data' >> beam.io.ReadFromText('metadata_google.json')
         
             pcoll_business_google_transformed = (
                 pcoll_business_google
                 | 'Apply Pandas Transformation' >> beam.ParDo(PandasTransform(etl_business_google))
-                )
+                )"""
 
             """# Dentro del bloque 'with beam.Pipeline(options=options) as p:'
             local_input_path = 'metadata_google'
@@ -443,7 +452,6 @@ def run():
                 | 'Get Local File Path' >> beam.Map(lambda file_name: os.path.join(local_input_path, file_name))
                 | 'Read and Process Local Files' >> beam.ParDo(ProcessFileDoFn(), etl_function=etl_business_google)
             )"""
-            writetobigquery(pcoll_business_google_transformed,'windy-tiger-410421.UltaBeautyReviews.google_business_data')
             os.remove('metadata_google.json')
 
         #ETL reviews Google
@@ -475,11 +483,12 @@ def run():
             folders_list2=folders(a['id'])
             for b in folders_list2:
                 download_file(b['id'],a['name'].split('-')[1]+'.json')
-                pcoll_reviews_google = p | 'Read Google metadata Data' >> beam.io.ReadFromText(a['name'].split('-')[1]+'.json')    
+                etl_reviews_google(pd.read_json(a['name'].split('-')[1]+'.json',lines=True))
+                """pcoll_reviews_google = p | 'Read Google metadata Data' >> beam.io.ReadFromText(a['name'].split('-')[1]+'.json')    
                 pcoll_reviews_google_transformed = (
                     pcoll_reviews_google
                     | 'Apply Pandas Transformation' >> beam.ParDo(PandasTransform(etl_reviews_google))
-                    )
+                    )"""
 
                 """# Dentro del bloque 'with beam.Pipeline(options=options) as p:'
                 local_input_path = a
@@ -489,8 +498,7 @@ def run():
                     | 'Get Local File Path' >> beam.Map(lambda file_name: os.path.join(local_input_path, file_name))
                     | 'Read and Process Local Files' >> beam.ParDo(ProcessFileDoFn(), etl_function=etl_reviews_google)
                 )"""
-                writetobigquery(pcoll_reviews_google_transformed,'windy-tiger-410421.UltaBeautyReviews.google_reviews_ulta_beauty')
-                os.remove(a)
+                os.remove(a['name'].split('-')[1]+'.json')
 
 if __name__ == '__main__':
     run()
