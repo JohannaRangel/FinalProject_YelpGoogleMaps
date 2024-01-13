@@ -483,6 +483,7 @@ def run():
                 del dfreviewsGoogle
                 os.remove(a['name'].split('-')[1]+c+'.json')
         logs.to_csv('logs_loads.csv',index=False)
+        #subir al storage
         del logs
 if __name__ == '__main__':
     run()
