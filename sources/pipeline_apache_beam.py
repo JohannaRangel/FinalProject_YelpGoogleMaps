@@ -1,5 +1,4 @@
 import apache_beam as beam
-from apache_beam.io import WriteToBigQuery
 from apache_beam.options.pipeline_options import PipelineOptions
 import pandas as pd
 import os
@@ -9,13 +8,21 @@ from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from googleapiclient.http import MediaIoBaseDownload
 from google.cloud import bigquery
+import google.cloud.storage
+from io import StringIO
+import datetime
 
-#función para descargar los datos de los negocios de Yelp
-def download_file(id,nombre):
+#crea servicio de google drive
+def build_service():
     SCOPES= ['https://www.googleapis.com/auth/drive']
     service_account_file='service_account.json'
     creds=service_account.Credentials.from_service_account_file(service_account_file,scopes=SCOPES)
     service=build('drive','v3',credentials=creds)
+    return service
+
+#función para descargar archivos de google drive
+def download_file(id,nombre,service_created):
+    service=service_created
     request = service.files().get_media(fileId=id)
     fh = open(nombre,'wb')
     downloader = MediaIoBaseDownload(fh, request)
@@ -24,37 +31,70 @@ def download_file(id,nombre):
         status, done = downloader.next_chunk()
     # Cierra el archivo local
     fh.close()
-
-def folders(id_folder):
-    SCOPES= ['https://www.googleapis.com/auth/drive']
-    service_account_file='service_account.json'
-    creds=service_account.Credentials.from_service_account_file(service_account_file,scopes=SCOPES)
-    service=build('drive','v3',credentials=creds)
+#función para obtener la lista de archivos dentro de un folder 
+def folders(id_folder,service_created):
+    service=service_created
     results = service.files().list(q=f"'{id_folder}' in parents",
                                     fields="files(id, name)").execute()
     files = results.get('files', [])
     return files
-
-#funcion para descargar un folder con archvios de google drive
-def ids_folder(folder_id):
-    SCOPES= ['https://www.googleapis.com/auth/drive']
-    service_account_file='service_account.json'
-    creds=service_account.Credentials.from_service_account_file(service_account_file,scopes=SCOPES)
-    service=build('drive','v3',credentials=creds)
-    ids=service.files().list(
-        q=f"'{folder_id}' in parents and mimeType != 'application/vnd.google-apps.folder'",
-        pageSize=1000,  # Puedes ajustar este valor según sea necesario
-        fields="files(id)"
-        ).execute()['files']
-    ids=[a['id'] for a in ids]
-    return ids
-
-def writetobigquery(df,table_id):
+def cliente_bigquery():
     credentials_path='service_account.json'
     credentials =  service_account.Credentials.from_service_account_file(credentials_path, scopes = ['https://www.googleapis.com/auth/cloud-platform'])
     client = bigquery.Client(credentials=credentials, project=credentials.project_id)
+    return client
+def writetobigquery(df,table_id):
+    client=cliente_bigquery()
     job_config0 = bigquery.LoadJobConfig(write_disposition = 'WRITE_APPEND')
     job = client.load_table_from_dataframe(df, table_id, job_config=job_config0)
+
+def query_bigquery(parametro_select,tabla,dataframe):
+    client=cliente_bigquery()
+    query =f"SELECT {parametro_select} " 
+    query+= f"FROM `windy-tiger-410421.UltaBeautyReviews.{tabla}` WHERE "
+    for i, column_name in enumerate(dataframe.columns):
+      if i>0:
+        query+= " AND "
+      query+=f"{column_name} IN "
+      lista=str(dataframe[column_name].unique().tolist()).strip('[]')
+      query+=f'({lista})'
+    results=client.query(f"""{query}""")
+    return results
+
+def checar_filas(dataframe_etl,tabla):
+    dfquery=query_bigquery('*',tabla,dataframe_etl).result().to_dataframe()
+    # Itera sobre cada fila de df2 y verifica si está contenida en df1
+    filassincargar=[]
+    for index, row in dataframe_etl.iterrows():
+        is_contained = dfquery[dfquery.eq(row).all(axis=1)].shape[0] > 0
+        if is_contained:
+            continue
+        else:
+            filassincargar.append(row)
+    df=pd.DataFrame(filassincargar)
+    writetobigquery(df,tabla)
+
+def validación(dataframe,tabla):
+    results=query_bigquery("COUNT(*)",tabla,)
+    registros=next(results.result())[0]
+    largo_dataframe=len(dataframe)
+    if registros==largo_dataframe:
+        return 'continue'
+    if registros<largo_dataframe:
+        checar_filas(dataframe,tabla)
+        return 'carga filas pendientes'
+    if registros==0:
+        writetobigquery(dataframe,f'`windy-tiger-410421.UltaBeautyReviews.{tabla}')
+        return 'carga tabla completa'
+    
+def cargar_logs(df,descripcion,archivo):
+    fecha = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    hora= datetime.datetime.now().strftime("%H:%M:%S")
+    lista=[{'Fecha':fecha,'Hora':hora,'Descripción':descripcion,'Archivo':archivo}]
+    log=pd.DataFrame(lista)
+    df=pd.concat([df,log])
+    return df
+
 
 def etl_business_yelp(dfbusinessYelp):
     
@@ -65,7 +105,7 @@ def etl_business_yelp(dfbusinessYelp):
 
     #Borrar columnas irrelevantes para el proyecto
 
-    columns_to_drop = ['is_open', 'address', 'name', 'categories','BusinessParking','RestaurantsPriceRange2','attributes','hours']
+    columns_to_drop = ['is_open', 'address', 'name', 'categories','attributes','hours']
     dfbusinessYelp = dfbusinessYelp.drop(columns=columns_to_drop, axis=1)
 
     #Cambio de nombre de las columnas
@@ -121,12 +161,12 @@ def etl_business_yelp(dfbusinessYelp):
 
     #Agregamos la columna source
     dfbusinessYelp['source']='Y'
-    writetobigquery(dfbusinessYelp,'windy-tiger-410421.UltaBeautyReviews.yelp_business_data')
-    del dfbusinessYelp
+    return dfbusinessYelp
 
-def etl_reviews_yelp(dfreviewsYelp):
+def etl_reviews_yelp(dfreviewsYelp,ids):
 
-    business_ids = ['4uqRhXZTOzKF2ZhxbWzxfA','fWMPbickerGWohPy2vDL5A','DJZQCN0NUej_EtviN4rUlg','Vxqa8u_5RD5e7oBqdaU0yQ','idP674ti6a8yg8z2xFcCgA',
+    business_ids = ids
+    """['4uqRhXZTOzKF2ZhxbWzxfA','fWMPbickerGWohPy2vDL5A','DJZQCN0NUej_EtviN4rUlg','Vxqa8u_5RD5e7oBqdaU0yQ','idP674ti6a8yg8z2xFcCgA',
                     'Vsx34Z-N5S5S0o0f2G6ORw','HLwzUJ8IZwP2mLpMMF5x7g','gNs9um_3hB3L8HFyMk2x4w','JGzrVEBaaVUd2VCsWlf47g','G4gzTUGV2xAoz6CG9STqfg','LivMZcvWxslI5G9At4K69w',
                     'CFyOrr--MWtxgjZvaHHV6Q','p-pp2F_iClEKk0wybXAaxg','n66mhHJpXftCUW9vXqeZwQ','CUi489qZNqfm2DsqL67BJw','FiIIuZGT-VJEju-bwNQTuA','9EZ6JKyqirjyE0GGHERmUQ',
                     'FPpm1z3z3SNEXrywKSnFBQ','LyQbIKnQN-3Pogi_5ZshNg','30rM6JGz_4cqjeBJZ93thA','Bb7-R7PdhknAWcl4GcLD7A','qDHInkhNalPHQi8rYi9kjA','qPohxPukFHiTsQ5wFQa0FQ',
@@ -136,7 +176,7 @@ def etl_reviews_yelp(dfreviewsYelp):
                     'PxIrdyTFViCocKbIPN5zQA','YYJEGvjaEapprZnuFpW6tA','ndzDVdevAwhJFdXoc9lPCw','Z3JrRDH8jtPy2eyH4-Hx8A','ZsFOwyulu9PMDvA4dtBqsw','tGaPlSDHzEGHKnJkEdnDEQ',
                     'yqjA_Sd1c_aYPyaDyz3wbQ','Qf3FVkWVUFpVKwHaB6_iQg','hczzraTsDaGJNQV-fnK8hw','QM6CnjtMLVUyOvIj07XFAw','u_bN8-vC8D7MvkI8RakP4Q','E85lTnthikYTCxEsi39PWw',
                     'oJyhIkZY-0BkgtkmK7tRhg','TPUFZpI2RWEgJjOmLFtvCA','RMD5mNJgyQ1FGO_5YDCrzA','DLV4zM60EdyPFafEk88crg','THOXisAF58kiwXUv0h-w3g','652tRAf14Mu-2kzPKCeMbQ',
-                    'TuMQjYCumnFhWJV2ELwwxQ','kZJs6j2VrWjNrtx_p2zpiw']
+                    'TuMQjYCumnFhWJV2ELwwxQ','kZJs6j2VrWjNrtx_p2zpiw']"""
         
     dfreviewsYelp= dfreviewsYelp[dfreviewsYelp['business_id'].isin(business_ids)]
 
@@ -170,9 +210,7 @@ def etl_reviews_yelp(dfreviewsYelp):
 
     #Agregamos la columna source 
     dfreviewsYelp['source']='Y'
-
-    writetobigquery(dfreviewsYelp,'windy-tiger-410421.UltaBeautyReviews.yelp_reviews_ulta_beauty')
-    del dfreviewsYelp
+    return dfreviewsYelp
 
 def etl_business_google(dfbusinessGoogle):
     
@@ -225,12 +263,10 @@ def etl_business_google(dfbusinessGoogle):
     #Agregar la columna source
     dfbusinessGoogle['source']="G"
 
+    return dfbusinessGoogle
 
-    writetobigquery(dfbusinessGoogle,'windy-tiger-410421.UltaBeautyReviews.google_business_data')
-    del dfbusinessGoogle
-
-def etl_reviews_google(df):
-    business_ids_to_keep = ['0x80e849691015d7b7:0x314b8627656bc6d5','0x89e7ad0b7da12a11:0x2cab11e09a406d3a','0x89c2d130d433cc0b:0xb550e43a7ce3540',
+def etl_reviews_google(dfreviewsGoogle,ids):
+    """business_ids_to_keep = ['0x80e849691015d7b7:0x314b8627656bc6d5','0x89e7ad0b7da12a11:0x2cab11e09a406d3a','0x89c2d130d433cc0b:0xb550e43a7ce3540',
                             '0x89c30355aba7b017:0x3735266fb77aee42','0x89b62b6664208fed:0x5c970eed3a4cec49','0x89c39bff14375f07:0xc5ee9c1210c05e9a',
                             '0x54c8d5e692d7ae15:0x29cf0300c7eb68ce','0x89e8bfb8c1c6ea03:0x26dba039722009e0','0x88c2c39fe4d578a9:0x6189d55364509b43',
                             '0x88626770c6f52645:0x509b4f1c55e02490','0x89e4bc81e70c1451:0x718ba1be3e35898a','0x87f43a7a4e647ce7:0xb990c473b8e85463',
@@ -311,8 +347,8 @@ def etl_reviews_google(df):
                             '0x80dd4b91504c62b1:0xb3cc9dca79aa311d','0x883ef3a61fd8283b:0x8e94dd5107d09edc','0x87b6f1e3d067ff7d:0x11d955f4a804eb54',
                             '0x87df2abea993cd4f:0xf937b38a41d537bc','0x80dd2e536f430ea9:0xb56fc5d02329aa45','0x89e6778725d32203:0xe5f89de21172ad5e',
                             '0x89c4727e09899fd1:0x5e9a64ab3765ec2','0x89e405bbeed21f7f:0xfa1bae7dae7677d2','0x89acf761a874832d:0x111803f8757a81e0']
-    
-    dfreviewsGoogle=df
+        """
+    business_ids_to_keep=ids
     dfreviewsGoogle = dfreviewsGoogle[dfreviewsGoogle['gmap_id'].isin(business_ids_to_keep)]
 
     #Borrar columnas inecesarias
@@ -352,43 +388,11 @@ def etl_reviews_google(df):
 
     dfreviewsGoogle['text'] = dfreviewsGoogle['text'].apply(limpiar_texto)
 
-
     #Agregamos la columna source 
     dfreviewsGoogle['source']='G'
-    dfreviewsGoogle['user_id']=dfreviewsGoogle['user_id'].astype('str')
-    writetobigquery(dfreviewsGoogle,'windy-tiger-410421.UltaBeautyReviews.google_reviews_ulta_beauty')
-    del dfreviewsGoogle
+    dfreviewsGoogle['user_id'] = dfreviewsGoogle['user_id'].apply(lambda x: f'{x:.0f}')
 
-    
-
-"""class PandasTransform(beam.DoFn):
-    def process(self, element,funcion_etl):
-        # Aplica tu lógica de transformación con Pandas aquí
-        df = pd.DataFrame([element])
-        
-        # Realiza el ETL con Pandas
-        df_result = funcion_etl(df)
-class ProcessFileDoFn(beam.DoFn):
-    def process(self, element, etl_function):
-        file_path = element  # La ruta del archivo local
-        df = pd.read_json(file_path, lines=True)
-        df_result = etl_function(df)
-        yield df_result.to_dict(orient='records')
-
-        # Convierte el DataFrame resultante a una lista de diccionarios
-        yield df_result.to_dict(orient='records')"""
-
-"""def writetobigquery2(pcoll_transformed,nombre_tabla):
-    pcoll_transformed| 'Write to BigQuery' >> WriteToBigQuery(
-        table=nombre_tabla,
-        dataset='UltaBeautyReviews',
-        project='windy-tiger-410421',
-        create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
-        write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND,
-        method='STREAMING_INSERTS',  # Puedes ajustar el método de escritura según tus necesidades
-        #insert_retry_strategy='RETRY_TRANSIENT_ERRORS',  # Ajusta la estrategia de reintento según tus necesidades
-        custom_gcs_temp_location='gs://ultabeauty/tmp'
-        )"""
+    return dfreviewsGoogle
 
 def run():
     options=PipelineOptions(
@@ -398,107 +402,87 @@ def run():
         region='us-central1',)
         # Crea y configura el pipeline de Apache Beam
     with beam.Pipeline(options=options) as p:
-
-        #ETL business Yelp
+        client = google.cloud.storage.Client.from_service_account_json('service_account.json')
+        blob=client.bucket('ultabeauty').blob('logs/logs_loads.csv')
+        contenido = blob.download_as_text()
+        logs=pd.read_csv(StringIO(contenido))
+        try: #ETL business Yelp
         # Descarga archivo business.pkl
-        download_file('1byFtzpZXopdCN-XYmMHMpZqzgAqfQBBu', 'business_yelp.pkl')
-        df_business_yelp=pd.read_pickle('business_yelp.pkl')
-        etl_business_yelp(df_business_yelp)
-        os.remove('business_yelp.pkl')
-        # Lee el archivo en un PCollection
-        """pcoll_business_yelp = p | 'Read Yelp Business Data' >> beam.io.ReadFromText('business_yelp.json')
-        pcoll_business_yelp_transformed = (
-            pcoll_business_yelp
-            | 'Apply Pandas Transformation' >> beam.ParDo(PandasTransform(etl_business_yelp))
-        )
-        writetobigquery(pcoll_business_yelp_transformed,'yelp_business_data')"""
+            download_file('1byFtzpZXopdCN-XYmMHMpZqzgAqfQBBu', 'business_yelp.pkl')
+            df_business_yelp=pd.read_pickle('business_yelp.pkl')
+            df_business_yelp=etl_business_yelp(df_business_yelp)
+            validación_business_yelp=validación(df_business_yelp,'yelp_business_data')
+            if validación_business_yelp=='continue':
+                cargar_logs(logs,'','buisness_yelp.pkl')
+            if validación_business_yelp=='carga filas pendientes' or validación_business_yelp=='carga tabla completa':
+                cargar_logs(logs,'','buisness_yelp.pkl')
+            os.remove('business_yelp.pkl')
+            ids_yelp=df_business_yelp['business_id'].unique()
+            del df_business_yelp
 
-        # Borra el archivo descargado
+        except:
+            print('error en carga de dataset business yelp')
 
         #ETL reviews Yelp
         #descargamos el archivo en local
-        download_file('1byFtzpZXopdCN-XYmMHMpZqzgAqfQBBu','reviews_yelp.json')
-        
-        
-        """# Lee el archivo en un PCollection
-        pcoll_reviews_yelp = p | 'Read Yelp Business Data' >> beam.io.ReadFromText('reviews_yelp.json')
-        
-        pcoll_reviews_yelp_transformed = (
-            pcoll_reviews_yelp
-            | 'Apply Pandas Transformation' >> beam.ParDo(PandasTransform(etl_reviews_yelp))
-        )"""
+        download_file('1C2-ZAOIiUoh8FtpvIFINTa6Rb0ev5CAy','reviews_yelp.parquet')
+        dfreviewsyelp=pd.read_parquet('reviews_yelp.parquet')
+        dfreviewsyelp=etl_reviews_yelp(dfreviewsyelp,ids_yelp)
+        validación_reviews_yelp=validación(dfreviewsyelp,'yelp_reviews_ulta_beauty')
+        if validación_reviews_yelp=='continue':
+            cargar_logs(logs,'','reviews_yelp.parquet')
+        if validación_reviews_yelp=='carga filas pendientes' or validación_reviews_yelp=='carga tabla completa':
+            cargar_logs(logs,'','reviews_yelp.parquet')
+        del dfreviewsyelp
 
         # Borra el archivo descargado
         os.remove('reviews_yelp.json')
 
         #ETL metadata business Google
 
-        list_ids=ids_folder('1olnuKLjT8W2QnCUUwh8uDuTTKVZyxQ0Z')
-        for a in list_ids:
-            download_file(a,'metadata_google.json')
-            etl_business_google(pd.read_json('metadata_google.json',lines=True))
-            """pcoll_business_google = p | 'Read Google metadata Data' >> beam.io.ReadFromText('metadata_google.json')
-        
-            pcoll_business_google_transformed = (
-                pcoll_business_google
-                | 'Apply Pandas Transformation' >> beam.ParDo(PandasTransform(etl_business_google))
-                )"""
-
-            """# Dentro del bloque 'with beam.Pipeline(options=options) as p:'
-            local_input_path = 'metadata_google'
-            pcoll_business_google = (
-                p
-                | 'List Local Files' >> beam.Create(os.listdir())
-                | 'Get Local File Path' >> beam.Map(lambda file_name: os.path.join(local_input_path, file_name))
-                | 'Read and Process Local Files' >> beam.ParDo(ProcessFileDoFn(), etl_function=etl_business_google)
-            )"""
-            os.remove('metadata_google.json')
+        list_ids=folders('1olnuKLjT8W2QnCUUwh8uDuTTKVZyxQ0Z')
+        no_archivos=len(list_ids)
+        for b,a in enumerate(list_ids):
+            try:
+                download_file(a['id'],'metadata_google'+a['name'])
+                dfbusinessGoogle=etl_business_google(pd.read_json('metadata_google'+a['name'],lines=True))
+                validación_business_Google=validación(dfbusinessGoogle,'google_business_data')
+                print(f'archivo no. {b} de {no_archivos}')
+                if validación_business_Google=='continue':
+                    cargar_logs(logs,'datos ya registrados','metadata_google'+a['name'])
+                    continue
+                if validación_business_Google=='carga filas pendientes' or validación_business_Google=='carga tabla completa':
+                    cargar_logs(logs,'','metadata_google'+a['name'])
+                os.remove('metadata_google'+a['name'])
+                ids_google=dfbusinessGoogle['business_id'].unique()
+                del validación_business_Google
+                del dfbusinessGoogle
+            except:
+                name=a['name']
+                print(f'error en carga de archivo metadata Google{name}')
+        print('carga de metadata Google completa')
 
         #ETL reviews Google
             
-        
-
         #descargamos cada carpeta por estado, hacemos el ETL de cada carpeta y guardamos en bigquery
-        folders_id={'Alabama':'1d8qkSNSvIioGxQGywN0GE_HDIqYB2ZZv','Alaska':'1pgC5X_XObV0g4-Mli3J7eoglzhNNJa5o','Arizona':'1-w20axtXbCNNai7jc4NYyDJf7vW7q2wV',
-                'Arkansas':'1TgjCDBc0gwDdFIOdxEr2K__Pw8lJVRsV','California':'1Jrbjt-0hnLCvecfrnMwGu1jYZSxElJll','Colorado':'1IlUZJZxOyRiIWo3G6BqW1Thu2kXYKMFX',
-                'Connecticut':'1xZEGYWvQMLtWUfgo7TV9BdT_n7GNG3F1','Delaware':'1Dpo2hIQBbgUsCl4_EJjYTCc2Y8DUWORT',
-                'District_of_Columbia':'1MeJcfRmuNfp-xhSd2iIIiCojePR5Ss0u','Florida':'1kxYcx3BjWNR2IVJ9odksaPRVOWzwQJts',
-                'Georgia':'1MuPznes6CebS6gyWPVU-kR4EVKKLY4l3','Hawaii':'1IIAsDSlBiqQEdoN_n0E8a6TTAnrJMyWf','Idaho':'1QsYqI9xyTkyy3XqMGOQO1Ry5IibwQp1b',
-                'Illinois':'1F8x0ymIgQInUCaqAxdkG89h2IQesNSEM','Indiana':'1QRr2lTZpIHzTEdc8xAzsOP1Na-9nmu94','Iowa':'1VgoUBVISFDHjlXJ4nRlAGPQkWFLleH9N',
-                'Kansas':'1301Fcj19UfYg2175WzAgOy9TT-iERPkf','Kentucky':'1phkjuHo7nYWvA3uDPdj3J3O3-4qqzwUD','Louisiana':'1fxJVlbj2Z0ZBoOoHqgMBlH_1nIhwycg2',
-                'Maine':'1E3eJcycrHEQKJB7K1JKBEqj8dlYvSapa','Maryland':'1lDIIS19yyECxmDtiB8Mqxaz1c-pinOHM','Massachusetts':'1ORrUfBkvwJ4PiyxovgvWT2f1G9_y5r6c',
-                'Michigan':'1up0B5BBxIXuwB0Ue6gl1KpM6iLPpC6Wz','Minnesota':'1mozfz7mswyjoQejGtctV0ipTIhuFnCL7','Mississippi':'1i5zhK-rlDtsUYmGW7dGIMsPTMwhXaXxJ',
-                'Missouri':'1NrCFwbGlQz6i5w-QHvL9r8VENgtXMMgo','Montana':'1-YytZf6hIimIWMfcgk7QBXGT8PlEnJft','Nebraska':'1sGd0TxRR2MujzQUXftQFg6PLrPRmwsHi',
-                'Nevada':'1W8x6jX1u0fCvpSf0hPHK5rg5jftKEjXK','New_Hampshire':'1NTDhffJyPQ-o067yB2OEz92lYCkFLatK','New_Jersey':'1jktC8qBJqIOBFf8ZNF7hmB66LHcqlvlG',
-                'New_Mexico':'1n11VoHrVved8T4Ppdt4ri4cB3-_QgY05','New_York':'18HYLDXcKg-cC1CT9vkRUCgea04cNpV33',
-                'North_Carolina':'16D1dwKtCbWDJGhr_k9nsZomRjAqff8np','North_Dakota':'1jXCgzHcUU6cpVIYxEb-piFezrWcPERSa','Ohio':'1zwKir_Cih_Nh7nW_XcP244VQghBroGZd',
-                'Oklahoma':'146v-ZHRNQBFdGaB-mDspyyloLg3JO_Fj','Oregon':'1yLp_EEKQRfpmuDQjHSy24Es7_oRqk_jv','Pennsylvania':'1S6WHaD2uXzEzl6w7aQT7oknQqbvfEw1j',
-                'Rhode_Island':'1UCUBqlJsEJQzYCr1hoGOTlD1iPyPf1Qj','South_Carolina':'11Vv61BJwZKbGb8FXQOvQQ88y7b3VZX4i',
-                'South_Dakota':'1wG-pyem8sdj94NqO7fuSgX8wGxQWzwFU','Tennessee':'1m8GV0m4geI_i6Bfe9YVGjIOVFoTzSOLJ','Texas':'1zq12pojMW2zeGgts0lHFSf_pF1L_4UWr',
-                'Utah':'1ll2VZUERIaAQyngnfiF0VSsg2WqxQqWN','Vermont':'1RF-zTyWPPi1DWHVYR4LSqyknFMAcxuo3','Virginia':'1OV8FeeuiYHmIIpMVitliFO_w4XLK1pXi',
-                'Washington':'1y6MqAZNUmOW8zXArm_-UEq38Ej-0vp7a','West-Virginia':'1ffuT8ch4UPQ2Hz71TNGC3bKlfkfCv1cy',
-                'Wisconsin':'1KednQoExNw-pq9uZGLxNEdVEV3NRJXJX','Wyoming':'1XBl_mEvdaSt2K_4TOebIArrm4smnv-im'}
         folders_list=folders('19QNXr_BcqekFNFNYlKd0kcTXJ0Zg7lI6')
         for a in folders_list:
             folders_list2=folders(a['id'])
-            for b in folders_list2:
-                download_file(b['id'],a['name'].split('-')[1]+'.json')
-                etl_reviews_google(pd.read_json(a['name'].split('-')[1]+'.json',lines=True))
-                """pcoll_reviews_google = p | 'Read Google metadata Data' >> beam.io.ReadFromText(a['name'].split('-')[1]+'.json')    
-                pcoll_reviews_google_transformed = (
-                    pcoll_reviews_google
-                    | 'Apply Pandas Transformation' >> beam.ParDo(PandasTransform(etl_reviews_google))
-                    )"""
-
-                """# Dentro del bloque 'with beam.Pipeline(options=options) as p:'
-                local_input_path = a
-                pcoll_reviews_google = (
-                    p
-                    | 'List Local Files' >> beam.Create(os.listdir(local_input_path))
-                    | 'Get Local File Path' >> beam.Map(lambda file_name: os.path.join(local_input_path, file_name))
-                    | 'Read and Process Local Files' >> beam.ParDo(ProcessFileDoFn(), etl_function=etl_reviews_google)
-                )"""
-                os.remove(a['name'].split('-')[1]+'.json')
-
+            for c,b in enumerate(folders_list2):
+                download_file(b['id'],a['name'].split('-')[1]+c+'.json')
+                dfreviewsGoogle=pd.read_json(a['name'].split('-')[1]+'.json',lines=True)
+                dfreviewsGoogle=etl_reviews_google(dfreviewsGoogle,ids_google)
+                validación_reviews_Google=validación(dfreviewsGoogle,'google_reviews_ulta_beauty')
+                if validación_reviews_Google=='continue':
+                    cargar_logs(logs,'datos ya registrados','metadata_google'+a['name']+c+'.json')
+                    del validación_reviews_Google
+                    continue
+                if validación_reviews_Google=='carga filas pendientes' or validación_business_Google=='carga tabla completa':
+                    cargar_logs(logs,validación_reviews_Google,'metadata_google'+a['name']+c+'.json')
+                    del validación_reviews_Google
+                del dfreviewsGoogle
+                os.remove(a['name'].split('-')[1]+c+'.json')
+        logs.to_csv('logs_loads.csv',index=False)
+        del logs
 if __name__ == '__main__':
     run()
