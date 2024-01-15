@@ -20,12 +20,12 @@ tableY = client.get_table(f'{project_id}.{dataset_id}.{table_idY}')
 tableG = client.get_table(f'{project_id}.{dataset_id}.{table_idG}')
 
 # Construye y ejecuta la consulta para Yelp Reviews
-queryY = f"SELECT * FROM `{project_id}.{dataset_id}.{table_idY}` LIMIT 5"
+queryY = f"SELECT * FROM `{project_id}.{dataset_id}.{table_idY}`"
 query_jobY = client.query(queryY)
 df_Y_ulta_beauty=query_jobY.to_dataframe()
 
 # Construye y ejecuta la consulta para Google Reviews
-queryG = f"SELECT * FROM `{project_id}.{dataset_id}.{table_idG}` LIMIT 5"
+queryG = f"SELECT * FROM `{project_id}.{dataset_id}.{table_idG}`"
 query_jobG = client.query(queryG)
 df_G_ulta_beauty=query_jobG.to_dataframe()
 
