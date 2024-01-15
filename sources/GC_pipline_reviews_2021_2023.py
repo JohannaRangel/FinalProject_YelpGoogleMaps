@@ -2,15 +2,13 @@ import pandas as pd
 import requests
 from datetime import datetime
 import re
-import google.cloud.storage
 from io import StringIO
 import datetime
 from google.oauth2 import service_account
 from google.cloud import bigquery
-import google.cloud.storage
 from google.cloud import storage
 
-def datos_nuevos():
+def datos_nuevos_Google():
     # URL de la API con el token
     api_url = "https://api.apify.com/v2/actor-tasks/frombini~google-maps-scraper-task/runs/last/dataset/items?token=apify_api_ZE7FMykxbpsHef9FAMxUqF9esYgIGK2LrElm&unwind=reviews&fields=placeId,reviews&omit=textTranslated,publishAt,likesCount,reviewId,reviewUrl,reviewerUrl,reviewerPhotoUrl,reviewerNumberOfReviews,isLocalGuide,rating,reviewImageUrls,reviewContext,reviewDetailedRating,name,responseFromOwnerDate,responseFromOwnerText"
 
@@ -74,9 +72,59 @@ def datos_nuevos():
     nuevos_datosG.drop(columns=['Unnamed: 0','place_id'],inplace=True)
     nuevos_datosG['source']='G'
     return nuevos_datosG
+def datos_nuevos_yelp():
+    # URL de la API con el token
+    api_url = "https://api.apify.com/v2/actor-tasks/frombini~yelp-scrap-task/runs/last/dataset/items?token=apify_api_ZE7FMykxbpsHef9FAMxUqF9esYgIGK2LrElm&unwind=reviews"
+
+    # Realiza la solicitud GET
+    response = requests.get(api_url)
+
+    # Verifica el estado de la respuesta
+    if response.status_code == 200:
+        # Parsea la respuesta JSON
+        data = response.json()
+
+        # Imprime los datos
+        print(data)
+    else:
+        print(f"Error en la solicitud: {response.status_code}, {response.text}")
+    df=pd.DataFrame(data)
+    df.drop(columns=['#error','#debug'],inplace=True)
+    df['stars']=df['stars'].str.split(' ',expand=True)[0].astype('float64')
+    df.rename(columns={'businessId':'business_id','userIDs':'user_id','fechas':'date','reviews':'text'},inplace=True)
+    dfreviewsYelp=df
+    #Obtenemos el año , mes y hora de la columna date
+
+    dfreviewsYelp['date'] = pd.to_datetime(dfreviewsYelp['date'], format='%Y-%m-%d %H:%M:%S')
+    dfreviewsYelp['month'] = dfreviewsYelp['date'].dt.month
+    dfreviewsYelp['year'] = dfreviewsYelp['date'].dt.year
+    dfreviewsYelp['hour'] = dfreviewsYelp['date'].dt.time
+    dfreviewsYelp.drop(columns=['date'],inplace=True)
+
+    #Filtramos los años a partir del 2019
+
+    dfreviewsYelp = dfreviewsYelp[(dfreviewsYelp['year'] >= 2019) & (dfreviewsYelp['year'] <= 2021)]
+
+    # Convertimos la columna texto a minuscula y quitamos los caracteres especiales
+
+    def limpiar_texto(texto):
+        # Convertir a minúsculas
+        texto = texto.lower()
+        # Eliminar caracteres especiales usando expresiones regulares
+        texto = re.sub(r'[^a-z0-9\s]', '', texto)
+        return texto
+
+        # Aplicar la función a la columna 'text'
+    dfreviewsYelp['text'] = dfreviewsYelp['text'].apply(limpiar_texto)
+
+        #Agregamos la columna source 
+    dfreviewsYelp['source']='Y'
+    return dfreviewsYelp
+ 
+
 
 def cliente_bigquery():
-    credentials_path='service_account.json'
+    credentials_path=r'C:\Users\p2_ge\Documents\proyectos\proyecto final\credencial google cloud\service_account.json'
     credentials =  service_account.Credentials.from_service_account_file(credentials_path, scopes = ['https://www.googleapis.com/auth/cloud-platform'])
     client = bigquery.Client(credentials=credentials, project=credentials.project_id)
     return client
@@ -147,7 +195,7 @@ def run():
     blob=client.bucket('ultabeauty').blob('logs/logs_loads.csv')
     contenido = blob.download_as_text()
     logs=pd.read_csv(StringIO(contenido))
-    df=datos_nuevos()
+    df=datos_nuevos_Google()
     validación(df,'google_reviews_ulta_beauty',logs)
     dfquery=query_bigquery('*','google_reviews_ulta_beauty',df).result().to_dataframe()
     # Itera sobre cada fila de df2 y verifica si está contenida en df1
@@ -160,7 +208,23 @@ def run():
             filassincargar+=1
     if filassincargar>0:
         print('filas caragadas correctamente')
-        cargar_logs(logs,'verificación de carga completa reviews google 2021-2023','Google reviews')
+        cargar_logs(logs,'verificación de carga completa reviews google 2021-2023','yelp reviews')
+    else:
+        print(f'filas pendientes de cargar{filassincargar}')
+    df=datos_nuevos_yelp()
+    validación(df,'yelp_reviews_ulta_beauty',logs)
+    dfquery=query_bigquery('*','yelp_reviews_ulta_beauty',df).result().to_dataframe()
+    # Itera sobre cada fila de df2 y verifica si está contenida en df1
+    filassincargar=0
+    for index, row in df.iterrows():
+        is_contained = dfquery[dfquery.eq(row).all(axis=1)].shape[0] > 0
+        if is_contained:
+            continue
+        else:
+            filassincargar+=1
+    if filassincargar>0:
+        print('filas caragadas correctamente')
+        cargar_logs(logs,'verificación de carga completa reviews yelp 2021-2023','yelp reviews')
     else:
         print(f'filas pendientes de cargar{filassincargar}')
     try:
@@ -174,3 +238,7 @@ def run():
         del logs
     except Exception as e:
         print(f'error {e}')
+
+   
+if __name__ == '__main__':
+    run()
