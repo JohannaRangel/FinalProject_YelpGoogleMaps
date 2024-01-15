@@ -2,6 +2,7 @@ import pandas as pd
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import torch
 from google.cloud import bigquery
+from google.oauth2 import service_account
 
 '''conexión a big query'''
 
@@ -54,23 +55,21 @@ def analyze_sentiment(review):
 # Apply the function to the 'text' column of ulta_beauty
 ulta_beauty['sentiment'] = ulta_beauty['text'].apply(lambda x: analyze_sentiment(x))
 ulta_beauty['sentiment_label'] = ulta_beauty['sentiment'].apply(lambda x: 'positive' if x == 1 else 'negative')
+
 print('El modelo se entreno correctamente')
 
-'''Cargar resultados
+'''Cargar resultados'''
 
-def upload_to_gcs(bucket_name, source_file_path, destination_blob_name):
-    # Crea una instancia del cliente de Google Cloud Storage
-    client = storage.Client.from_service_account_json('service_account.json')
+def writetobigquery(df,table_id):
+    client=cliente_bigquery()
+    job_config0 = bigquery.LoadJobConfig(write_disposition = 'WRITE_TRUNCATE',createDisposition= 'CREATE_IF_NEEDED')
+    client.load_table_from_dataframe(df, table_id, job_config=job_config0,)
 
-    # Obtiene el bucket
-    bucket = client.get_bucket(bucket_name)
+def cliente_bigquery():
+    credentials_path='service_account.json'
+    credentials =  service_account.Credentials.from_service_account_file(credentials_path, scopes = ['https://www.googleapis.com/auth/cloud-platform'])
+    client = bigquery.Client(credentials=credentials, project=credentials.project_id)
+    return client
 
-    # Crea un nuevo blob en el bucket utilizando el nombre de destino proporcionado
-    blob = bucket.blob(destination_blob_name)
+writetobigquery(ulta_beauty,'ulta_beauty_sentiment_analysis')
 
-    # Sube el archivo al blob
-    blob.upload_from_filename(source_file_path)
-
-    print(f'Archivo {source_file_path} subido a {destination_blob_name} en el bucket {bucket_name}.')
-
-upload_to_gcs('machinelearning-windy-tiger-410421',)'''

@@ -10,7 +10,7 @@ RUN pip install db-dtypes
 
 # Copiar tu script al contenedor
 COPY sentiment_analysis.py /
-COPY windy-tiger-410421-956bf231305a.json /
+COPY service_account.json /
 
 # Definir el directorio de trabajo
 WORKDIR /
