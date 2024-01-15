@@ -416,7 +416,7 @@ def run():
     contenido = blob.download_as_text()
 
     logs=pd.read_csv(StringIO(contenido))
-    """try: #ETL business Yelp
+    try: #ETL business Yelp
     # Descarga archivo business.pkl
         if os.path.exists('business_yelp.pkl'):
             pass
@@ -493,7 +493,7 @@ def run():
         print('carga de metadata Google completa')
     except Exception as e:
         logs=cargar_logs(logs,f'error {e}','dataset metadata Google')
-        print(f'error {e}')"""
+        print(f'error {e}')
     #ETL reviews Google"""
         
     #descargamos cada carpeta por estado, hacemos el ETL de cada carpeta y guardamos en bigquery
