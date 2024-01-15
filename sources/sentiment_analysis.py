@@ -20,10 +20,7 @@ query_jobG = client.query(queryG)
 G_ulta_beauty = query_jobG.result()
 
 # Convierte el resultado a un DataFrame de Pandas
-df_G_ulta_beauty = pd.DataFrame(G_ulta_beauty)
-
-# Imprime el DataFrame
-print(df_G_ulta_beauty)
+G_ulta_beauty = pd.DataFrame(G_ulta_beauty)
 
 # Construye y ejecuta la consulta para Yelp Reviews
 queryY = f"SELECT * FROM `{project_id}.{dataset_id}.{table_idY}` LIMIT 5"
@@ -31,16 +28,11 @@ query_jobY = client.query(queryY)
 Y_ulta_beauty = query_jobY.result()
 
 # Convierte el resultado a un DataFrame de Pandas
-df_Y_ulta_beauty = pd.DataFrame(Y_ulta_beauty)
-
-# Imprime el DataFrame
-print(df_Y_ulta_beauty)
+Y_ulta_beauty = pd.DataFrame(Y_ulta_beauty)
 
 print('Los datos se cargaron correctamente')
 
-
-''''
-"""Correr el modelo"""
+'''Correr el modelo'''
 
 ulta_beauty = pd.concat([G_ulta_beauty, Y_ulta_beauty])
 
@@ -62,7 +54,10 @@ def analyze_sentiment(review):
 # Apply the function to the 'text' column of ulta_beauty
 ulta_beauty['sentiment'] = ulta_beauty['text'].apply(lambda x: analyze_sentiment(x))
 
-Cargar resultados
+print(ulta_beauty['sentiment'])
+print('El modelo se entreno correctamente')
+
+'''Cargar resultados
 
 
 
