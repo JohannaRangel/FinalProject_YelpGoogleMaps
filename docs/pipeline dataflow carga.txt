@@ -16,7 +16,7 @@ gsutil cp -r gs://ultabeauty .
 cd ultabeauty/
 
 # Construir una imagen de Docker llamada "contenedorprueba" desde el Dockerfile en el directorio actual
- docker build -t reviewsimage .
+docker build -t reviewsimage .
 
 # Ejecutar un contenedor basado en la imagen "contenedorprueba"
 docker run -it reviewsimage
@@ -27,4 +27,13 @@ python pipeline_apache_beam.py \
   --region=us-central1 \  # Región de ejecución
   --runner=DataflowRunner \  # Tipo de runner (Dataflow en este caso)
   --machine_type=e2-standard-2 \  # Tipo de máquina virtual utilizada por Dataflow
-  --save_main_session  # Indicar a Dataflow que guarde el estado principal de la sesión
+  --save_main_session \ # Indicar a Dataflow que guarde el estado principal de la sesión
+  --temp_location=gs://ultabeauty/tmp
+
+python pipeline_apache_beam.py \
+  --project=$PROJECT \
+  --region=us-central1 \
+  --runner=DataflowRunner \
+  --machine_type=e2-standard-2 \
+  --save_main_session \
+  --temp_location=gs://ultabeauty/tmp
