@@ -62,7 +62,7 @@ print('El modelo se entreno correctamente')
 
 def writetobigquery(df,table_id):
     client=cliente_bigquery()
-    job_config0 = bigquery.LoadJobConfig(write_disposition = 'WRITE_TRUNCATE',createDisposition= 'CREATE_IF_NEEDED')
+    job_config0 = bigquery.LoadJobConfig(write_disposition = 'WRITE_TRUNCATE',create_disposition= 'CREATE_IF_NEEDED')
     client.load_table_from_dataframe(df, table_id, job_config=job_config0,)
 
 def cliente_bigquery():
@@ -71,7 +71,7 @@ def cliente_bigquery():
     client = bigquery.Client(credentials=credentials, project=credentials.project_id)
     return client
 
-writetobigquery(ulta_beauty,'ulta_beauty_sentiment_analysis')
+writetobigquery(ulta_beauty,'windy-tiger-410421.UltaBeautyReviews.ulta_beauty_sentiment_analysis')
 
 print('La carga a BigQuery se cargo de manera exitosa')
 
