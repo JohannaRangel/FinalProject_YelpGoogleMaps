@@ -1,5 +1,5 @@
-import apache_beam as beam
-from apache_beam.options.pipeline_options import PipelineOptions
+#import apache_beam as beam
+#from apache_beam.options.pipeline_options import PipelineOptions
 import pandas as pd
 import os
 from geopy.geocoders import Nominatim
@@ -21,8 +21,8 @@ def build_service():
     return service
 
 #función para descargar archivos de google drive
-def download_file(id,nombre,service_created):
-    service=service_created
+def download_file(id,nombre):
+    service=build_service()
     request = service.files().get_media(fileId=id)
     fh = open(nombre,'wb')
     downloader = MediaIoBaseDownload(fh, request)
@@ -32,10 +32,9 @@ def download_file(id,nombre,service_created):
     # Cierra el archivo local
     fh.close()
 #función para obtener la lista de archivos dentro de un folder 
-def folders(id_folder,service_created):
-    service=service_created
-    results = service.files().list(q=f"'{id_folder}' in parents",
-                                    fields="files(id, name)").execute()
+def folders(id_folder):
+    service=build_service()
+    results = service.files().list(q=f"'{id_folder}' in parents",fields="files(id, name)").execute()
     files = results.get('files', [])
     return files
 def cliente_bigquery():
@@ -46,18 +45,15 @@ def cliente_bigquery():
 def writetobigquery(df,table_id):
     client=cliente_bigquery()
     job_config0 = bigquery.LoadJobConfig(write_disposition = 'WRITE_APPEND')
-    job = client.load_table_from_dataframe(df, table_id, job_config=job_config0)
+    job = client.load_table_from_dataframe(df, table_id, job_config=job_config0,)
 
-def query_bigquery(parametro_select,tabla,dataframe):
+def query_bigquery(query,tabla,dataframe):
     client=cliente_bigquery()
-    query =f"SELECT {parametro_select} " 
-    query+= f"FROM `windy-tiger-410421.UltaBeautyReviews.{tabla}` WHERE "
-    for i, column_name in enumerate(dataframe.columns):
-      if i>0:
-        query+= " AND "
-      query+=f"{column_name} IN "
-      lista=str(dataframe[column_name].unique().tolist()).strip('[]')
-      query+=f'({lista})'
+    lista_business='('+str([a for a in dataframe['business_id'].unique()]).strip('[]')+')'
+    query =f"SELECT {query} FROM `windy-tiger-410421.UltaBeautyReviews.{tabla}` WHERE business_id in {lista_business}"
+    if 'user_id' in dataframe.columns:
+        lista_user='('+str([a for a in dataframe['user_id'].unique()]).strip('[]')+')'
+        query+=f" AND user_id in {lista_user}"
     results=client.query(f"""{query}""")
     return results
 
@@ -71,22 +67,22 @@ def checar_filas(dataframe_etl,tabla):
             continue
         else:
             filassincargar.append(row)
-    df=pd.DataFrame(filassincargar)
-    writetobigquery(df,tabla)
-
+    if filassincargar==0:
+        return 'datos ya registrados'
+    else:
+        df=pd.DataFrame(filassincargar)
+        writetobigquery(df,f'windy-tiger-410421.UltaBeautyReviews.{tabla}')
+        return 'carga filas pendientes'
 def validación(dataframe,tabla):
-    results=query_bigquery("COUNT(*)",tabla,)
+    results=query_bigquery('COUNT(*)',tabla,dataframe)
     registros=next(results.result())[0]
     largo_dataframe=len(dataframe)
-    if registros==largo_dataframe:
-        return 'continue'
-    if registros<largo_dataframe:
-        checar_filas(dataframe,tabla)
-        return 'carga filas pendientes'
     if registros==0:
-        writetobigquery(dataframe,f'`windy-tiger-410421.UltaBeautyReviews.{tabla}')
+        writetobigquery(dataframe,f'windy-tiger-410421.UltaBeautyReviews.{tabla}')
         return 'carga tabla completa'
-    
+    else:
+        chequeo=checar_filas(dataframe,tabla)
+        return chequeo
 def cargar_logs(df,descripcion,archivo):
     fecha = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     hora= datetime.datetime.now().strftime("%H:%M:%S")
@@ -265,8 +261,8 @@ def etl_business_google(dfbusinessGoogle):
 
     return dfbusinessGoogle
 
-def etl_reviews_google(dfreviewsGoogle,ids):
-    """business_ids_to_keep = ['0x80e849691015d7b7:0x314b8627656bc6d5','0x89e7ad0b7da12a11:0x2cab11e09a406d3a','0x89c2d130d433cc0b:0xb550e43a7ce3540',
+def etl_reviews_google(dfreviewsGoogle):
+    business_ids_to_keep = ['0x80e849691015d7b7:0x314b8627656bc6d5','0x89e7ad0b7da12a11:0x2cab11e09a406d3a','0x89c2d130d433cc0b:0xb550e43a7ce3540',
                             '0x89c30355aba7b017:0x3735266fb77aee42','0x89b62b6664208fed:0x5c970eed3a4cec49','0x89c39bff14375f07:0xc5ee9c1210c05e9a',
                             '0x54c8d5e692d7ae15:0x29cf0300c7eb68ce','0x89e8bfb8c1c6ea03:0x26dba039722009e0','0x88c2c39fe4d578a9:0x6189d55364509b43',
                             '0x88626770c6f52645:0x509b4f1c55e02490','0x89e4bc81e70c1451:0x718ba1be3e35898a','0x87f43a7a4e647ce7:0xb990c473b8e85463',
@@ -347,8 +343,8 @@ def etl_reviews_google(dfreviewsGoogle,ids):
                             '0x80dd4b91504c62b1:0xb3cc9dca79aa311d','0x883ef3a61fd8283b:0x8e94dd5107d09edc','0x87b6f1e3d067ff7d:0x11d955f4a804eb54',
                             '0x87df2abea993cd4f:0xf937b38a41d537bc','0x80dd2e536f430ea9:0xb56fc5d02329aa45','0x89e6778725d32203:0xe5f89de21172ad5e',
                             '0x89c4727e09899fd1:0x5e9a64ab3765ec2','0x89e405bbeed21f7f:0xfa1bae7dae7677d2','0x89acf761a874832d:0x111803f8757a81e0']
-        """
-    business_ids_to_keep=ids
+
+    #business_ids_to_keep=ids
     dfreviewsGoogle = dfreviewsGoogle[dfreviewsGoogle['gmap_id'].isin(business_ids_to_keep)]
 
     #Borrar columnas inecesarias
@@ -393,97 +389,149 @@ def etl_reviews_google(dfreviewsGoogle,ids):
     dfreviewsGoogle['user_id'] = dfreviewsGoogle['user_id'].apply(lambda x: f'{x:.0f}')
 
     return dfreviewsGoogle
+from google.cloud import storage
+
+def upload_to_gcs(bucket_name, source_file_path, destination_blob_name):
+    # Crea una instancia del cliente de Google Cloud Storage
+    client = storage.Client.from_service_account_json('service_account.json')
+
+    # Obtiene el bucket
+    bucket = client.get_bucket(bucket_name)
+
+    # Crea un nuevo blob en el bucket utilizando el nombre de destino proporcionado
+    blob = bucket.blob(destination_blob_name)
+
+    # Sube el archivo al blob
+    blob.upload_from_filename(source_file_path)
+
+    print(f'Archivo {source_file_path} subido a {destination_blob_name} en el bucket {bucket_name}.')
+
+# Configura estos valores con tu información específica
+
+
 
 def run():
-    options=PipelineOptions(
-        runner='DataflowRunner',  #' Ejemplo: especificando el runner
-        project='windy-tiger-410421',
-        custom_gcs_temp_location='gs://ultabeauty/tmp',
-        region='us-central1',)
-        # Crea y configura el pipeline de Apache Beam
-    with beam.Pipeline(options=options) as p:
-        client = google.cloud.storage.Client.from_service_account_json('service_account.json')
-        blob=client.bucket('ultabeauty').blob('logs/logs_loads.csv')
-        contenido = blob.download_as_text()
-        logs=pd.read_csv(StringIO(contenido))
-        try: #ETL business Yelp
-        # Descarga archivo business.pkl
+    client = google.cloud.storage.Client.from_service_account_json('service_account.json')
+    blob=client.bucket('ultabeauty').blob('logs/logs_loads.csv')
+    contenido = blob.download_as_text()
+
+    logs=pd.read_csv(StringIO(contenido))
+    """try: #ETL business Yelp
+    # Descarga archivo business.pkl
+        if os.path.exists('business_yelp.pkl'):
+            pass
+        else:
             download_file('1byFtzpZXopdCN-XYmMHMpZqzgAqfQBBu', 'business_yelp.pkl')
-            df_business_yelp=pd.read_pickle('business_yelp.pkl')
-            df_business_yelp=etl_business_yelp(df_business_yelp)
-            validación_business_yelp=validación(df_business_yelp,'yelp_business_data')
-            if validación_business_yelp=='continue':
-                cargar_logs(logs,'','buisness_yelp.pkl')
-            if validación_business_yelp=='carga filas pendientes' or validación_business_yelp=='carga tabla completa':
-                cargar_logs(logs,'','buisness_yelp.pkl')
-            os.remove('business_yelp.pkl')
-            ids_yelp=df_business_yelp['business_id'].unique()
-            del df_business_yelp
+        print('descarga completa business_yelp.pkl')
+        df_business_yelp=pd.read_pickle('business_yelp.pkl')
+        print('lectura comopleta  business_yelp.pkl')
+        df_business_yelp=etl_business_yelp(df_business_yelp)
+        print('etl completo business_yelp.pkl')
+        validación_business_yelp=validación(df_business_yelp,'yelp_business_data')
+        if validación_business_yelp=='datos ya registrados':
+            logs=cargar_logs(logs,validación_business_yelp,'buisness_yelp.pkl')
+            print('validación completa')
+        if validación_business_yelp=='carga filas pendientes' or validación_business_yelp=='carga tabla completa':
+            logs=cargar_logs(logs,validación_business_yelp,'buisness_yelp.pkl')
+            print('validación completa')
+        
+    except Exception as e:
+        logs=cargar_logs(logs,f'error {e}','dataset yelp business')
+        print(f'error {e}')
+    os.remove('business_yelp.pkl')
+    ids_yelp=df_business_yelp['business_id'].unique()
+    del df_business_yelp
 
-        except:
-            print('error en carga de dataset business yelp')
-
-        #ETL reviews Yelp
-        #descargamos el archivo en local
-        download_file('1C2-ZAOIiUoh8FtpvIFINTa6Rb0ev5CAy','reviews_yelp.parquet')
+    #ETL reviews Yelp
+    #descargamos el archivo en local
+    try:
+        if os.path.exists('reviews_yelp.parquet'):
+            pass
+        else:
+            download_file('1C2-ZAOIiUoh8FtpvIFINTa6Rb0ev5CAy','reviews_yelp.parquet')
         dfreviewsyelp=pd.read_parquet('reviews_yelp.parquet')
         dfreviewsyelp=etl_reviews_yelp(dfreviewsyelp,ids_yelp)
         validación_reviews_yelp=validación(dfreviewsyelp,'yelp_reviews_ulta_beauty')
-        if validación_reviews_yelp=='continue':
-            cargar_logs(logs,'','reviews_yelp.parquet')
+        if validación_reviews_yelp=='datos ya registrados':
+            logs=cargar_logs(logs,validación_reviews_yelp,'reviews_yelp.parquet')
         if validación_reviews_yelp=='carga filas pendientes' or validación_reviews_yelp=='carga tabla completa':
-            cargar_logs(logs,'','reviews_yelp.parquet')
+            logs=cargar_logs(logs,validación_reviews_yelp,'reviews_yelp.parquet')
         del dfreviewsyelp
+    except Exception as e:
+        logs=cargar_logs(logs,f'error {e}','dataset yelp reviews')
+        print(f'error {e}')
 
-        # Borra el archivo descargado
-        os.remove('reviews_yelp.json')
+    # Borra el archivo descargado
+    os.remove('reviews_yelp.parquet')
 
-        #ETL metadata business Google
-
+    #ETL metadata business Google
+    try:
         list_ids=folders('1olnuKLjT8W2QnCUUwh8uDuTTKVZyxQ0Z')
         no_archivos=len(list_ids)
         for b,a in enumerate(list_ids):
             try:
-                download_file(a['id'],'metadata_google'+a['name'])
+                
+                if os.path.exists(a['name']):
+                    pass
+                else:
+                    download_file(a['id'],'metadata_google'+a['name'])
+                print(f'descarga completa archivo no. {b+1} de {no_archivos}')
                 dfbusinessGoogle=etl_business_google(pd.read_json('metadata_google'+a['name'],lines=True))
                 validación_business_Google=validación(dfbusinessGoogle,'google_business_data')
-                print(f'archivo no. {b} de {no_archivos}')
-                if validación_business_Google=='continue':
-                    cargar_logs(logs,'datos ya registrados','metadata_google'+a['name'])
+                print(f'archivo no. {b+1} de {no_archivos}')
+                if validación_business_Google=='datos ya registrados':
+                    logs=cargar_logs(logs,validación_business_Google,'metadata_google'+a['name'])
                     continue
-                if validación_business_Google=='carga filas pendientes' or validación_business_Google=='carga tabla completa':
-                    cargar_logs(logs,'','metadata_google'+a['name'])
+                if validación_business_Google=='carga filas pendientes'or validación_business_Google=='carga tabla completa':
+                    logs=cargar_logs(logs,validación_business_Google,'metadata_google'+a['name'])
                 os.remove('metadata_google'+a['name'])
-                ids_google=dfbusinessGoogle['business_id'].unique()
                 del validación_business_Google
                 del dfbusinessGoogle
             except:
                 name=a['name']
                 print(f'error en carga de archivo metadata Google{name}')
         print('carga de metadata Google completa')
-
-        #ETL reviews Google
-            
-        #descargamos cada carpeta por estado, hacemos el ETL de cada carpeta y guardamos en bigquery
+    except Exception as e:
+        logs=cargar_logs(logs,f'error {e}','dataset metadata Google')
+        print(f'error {e}')"""
+    #ETL reviews Google"""
+        
+    #descargamos cada carpeta por estado, hacemos el ETL de cada carpeta y guardamos en bigquery
+    try:
         folders_list=folders('19QNXr_BcqekFNFNYlKd0kcTXJ0Zg7lI6')
         for a in folders_list:
             folders_list2=folders(a['id'])
             for c,b in enumerate(folders_list2):
-                download_file(b['id'],a['name'].split('-')[1]+c+'.json')
-                dfreviewsGoogle=pd.read_json(a['name'].split('-')[1]+'.json',lines=True)
-                dfreviewsGoogle=etl_reviews_google(dfreviewsGoogle,ids_google)
+                download_file(b['id'],a['name'].split('-')[1]+str(c)+'.json')
+                dfreviewsGoogle=pd.read_json(a['name'].split('-')[1]+str(c)+'.json',lines=True)
+                dfreviewsGoogle=etl_reviews_google(dfreviewsGoogle)
+                if len(dfreviewsGoogle)==0:
+                    os.remove(a['name'].split('-')[1]+str(c)+'.json')
+                    continue
                 validación_reviews_Google=validación(dfreviewsGoogle,'google_reviews_ulta_beauty')
-                if validación_reviews_Google=='continue':
-                    cargar_logs(logs,'datos ya registrados','metadata_google'+a['name']+c+'.json')
+                if validación_reviews_Google=='datos ya registrados':
+                    logs=cargar_logs(logs,validación_reviews_Google,'reviews_google'+a['name']+str(c)+'.json')
                     del validación_reviews_Google
                     continue
-                if validación_reviews_Google=='carga filas pendientes' or validación_business_Google=='carga tabla completa':
-                    cargar_logs(logs,validación_reviews_Google,'metadata_google'+a['name']+c+'.json')
+                if validación_reviews_Google=='carga filas pendientes' or validación_reviews_Google=='carga tabla completa':
+                    logs=cargar_logs(logs,validación_reviews_Google,'reviews_google_'+a['name']+str(c)+'.json')
                     del validación_reviews_Google
                 del dfreviewsGoogle
-                os.remove(a['name'].split('-')[1]+c+'.json')
+                os.remove(a['name'].split('-')[1]+str(c)+'.json')
+    except Exception as e:
+        logs=cargar_logs(logs,f'error {e}','dataset metadata google')
+        print(f'error {e}')
+    try:
+
         logs.to_csv('logs_loads.csv',index=False)
-        #subir al storage
+        bucket_name = 'ultabeauty'
+        source_file_path = 'logs_loads.csv'
+        destination_blob_name = 'logs/logs_loads.csv'
+        # Llama a la función para subir el archivo
+        upload_to_gcs(bucket_name, source_file_path, destination_blob_name)
         del logs
+    except Exception as e:
+        print(f'error {e}')
+   
 if __name__ == '__main__':
     run()
