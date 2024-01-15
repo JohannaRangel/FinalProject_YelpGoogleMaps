@@ -73,3 +73,5 @@ def cliente_bigquery():
 
 writetobigquery(ulta_beauty,'ulta_beauty_sentiment_analysis')
 
+print('La carga a BigQuery se cargo de manera exitosa')
+
