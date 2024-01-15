@@ -56,7 +56,7 @@ ulta_beauty['sentiment'] = ulta_beauty['text'].apply(lambda x: analyze_sentiment
 ulta_beauty['sentiment_label'] = ulta_beauty['sentiment'].apply(lambda x: 'positive' if x == 1 else 'negative')
 print('El modelo se entreno correctamente')
 
-'''Cargar resultados'''
+'''Cargar resultados
 
 def upload_to_gcs(bucket_name, source_file_path, destination_blob_name):
     # Crea una instancia del cliente de Google Cloud Storage
@@ -73,4 +73,4 @@ def upload_to_gcs(bucket_name, source_file_path, destination_blob_name):
 
     print(f'Archivo {source_file_path} subido a {destination_blob_name} en el bucket {bucket_name}.')
 
-upload_to_gcs('machinelearning-windy-tiger-410421',)
+upload_to_gcs('machinelearning-windy-tiger-410421',)'''
