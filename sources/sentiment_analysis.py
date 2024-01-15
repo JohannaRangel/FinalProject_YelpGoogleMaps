@@ -13,7 +13,7 @@ client = bigquery.Client(project=project_id)
 # Especifica tu conjunto de datos y tabla para Yelp Reviews
 dataset_id = 'UltaBeautyReviews'
 table_idY = 'yelp_reviews_ulta_beauty'
-table_idG = 'yelp_reviews_ulta_beauty'
+table_idG = 'google_reviews_ulta_beauty'
 
 # Obtiene el esquema de la tabla de Yelp Reviews y Google Reviews
 tableY = client.get_table(f'{project_id}.{dataset_id}.{table_idY}')
@@ -30,7 +30,7 @@ query_jobG = client.query(queryG)
 df_G_ulta_beauty=query_jobG.to_dataframe()
 
 ulta_beauty = pd.concat([df_G_ulta_beauty, df_Y_ulta_beauty], ignore_index=True)
-print ('Datos cargados correctamente')
+print ('Datos leidos correctamente')
 
 print(ulta_beauty.head())
 
