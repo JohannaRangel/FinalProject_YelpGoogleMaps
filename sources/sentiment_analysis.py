@@ -2,6 +2,7 @@ import pandas as pd
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import torch
 from google.cloud import bigquery
+import db-dtypes
 
 '''conexión a big query'''
 
