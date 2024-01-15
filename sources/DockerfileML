@@ -6,6 +6,7 @@ RUN pip install pandas
 RUN pip install transformers
 RUN pip install torch
 RUN pip install google-cloud-storage
+RUN pip install db-dtypes
 
 # Copiar tu script al contenedor
 COPY sentiment_analysis.py /
