@@ -44,8 +44,10 @@ ulta_beauty = ulta_beauty[ulta_beauty['text'].apply(lambda x: isinstance(x, str)
 
 #Función para etiquetar el sentimiento y tokenizar el texto y
 def analyze_sentiment(review):
+    print('tokenizando el texto')
     model = AutoModelForSequenceClassification.from_pretrained("Kaludi/Reviews-Sentiment-Analysis", use_auth_token=False)
     tokenizer = AutoTokenizer.from_pretrained("Kaludi/Reviews-Sentiment-Analysis", use_auth_token=False)
+    print('Analizando el sentimiento')
     inputs = tokenizer(review, return_tensors="pt")
     outputs = model(**inputs)
     predicted_label = torch.argmax(outputs.logits, dim=1).item()
@@ -65,7 +67,7 @@ def cliente_bigquery():
 
 # Dividir el dataframe en partes para facilitar la carga
 
-num_parts = 10
+num_parts = 20
 total_rows = len(ulta_beauty)
 chunk_size = total_rows // num_parts
 
@@ -81,6 +83,7 @@ for i in range(num_parts):
     ulta_beauty_chunk['sentiment_label'] = ulta_beauty_chunk['sentiment'].apply(lambda x: 'positive' if x == 1 else 'negative')
 
     # Write the chunk to BigQuery
+    print('Cargando a BigQuery')
     writetobigquery(ulta_beauty_chunk, 'windy-tiger-410421.UltaBeautyReviews.ulta_beauty_sentiment_analysis')
 
     print(f'parte {i+1}/{num_parts} cargada a BigQuery exitosamente')
