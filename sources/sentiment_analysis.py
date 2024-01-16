@@ -35,34 +35,26 @@ print ('Datos leidos correctamente')
 print(ulta_beauty.head())
 
 
-'''Correr el modelo'''
+'''Funciones'''
 
 # Drop rows where 'text' is not a valid string
 ulta_beauty = ulta_beauty.dropna(subset=['text'])
 ulta_beauty = ulta_beauty[ulta_beauty['text'].apply(lambda x: isinstance(x, str))]
 
-#Tokenizar la columna de texto
-model = AutoModelForSequenceClassification.from_pretrained("Kaludi/Reviews-Sentiment-Analysis", use_auth_token=False)
-tokenizer = AutoTokenizer.from_pretrained("Kaludi/Reviews-Sentiment-Analysis", use_auth_token=False)
 
-#Función para etiquetar el sentimiento
+#Función para etiquetar el sentimiento y tokenizar el texto y
 def analyze_sentiment(review):
+    model = AutoModelForSequenceClassification.from_pretrained("Kaludi/Reviews-Sentiment-Analysis", use_auth_token=False)
+    tokenizer = AutoTokenizer.from_pretrained("Kaludi/Reviews-Sentiment-Analysis", use_auth_token=False)
     inputs = tokenizer(review, return_tensors="pt")
     outputs = model(**inputs)
     predicted_label = torch.argmax(outputs.logits, dim=1).item()
     return predicted_label
 
-# Apply the function to the 'text' column of ulta_beauty
-ulta_beauty['sentiment'] = ulta_beauty['text'].apply(lambda x: analyze_sentiment(x))
-ulta_beauty['sentiment_label'] = ulta_beauty['sentiment'].apply(lambda x: 'positive' if x == 1 else 'negative')
-
-print('El modelo se entreno correctamente')
-
-'''Cargar resultados'''
 
 def writetobigquery(df,table_id):
     client=cliente_bigquery()
-    job_config0 = bigquery.LoadJobConfig(write_disposition = 'WRITE_TRUNCATE',create_disposition= 'CREATE_IF_NEEDED')
+    job_config0 = bigquery.LoadJobConfig(write_disposition = 'WRITE_APPEND',create_disposition= 'CREATE_IF_NEEDED')
     client.load_table_from_dataframe(df, table_id, job_config=job_config0,)
 
 def cliente_bigquery():
@@ -71,7 +63,27 @@ def cliente_bigquery():
     client = bigquery.Client(credentials=credentials, project=credentials.project_id)
     return client
 
-writetobigquery(ulta_beauty,'windy-tiger-410421.UltaBeautyReviews.ulta_beauty_sentiment_analysis')
+# Dividir el dataframe en partes para facilitar la carga
 
-print('La carga a BigQuery se cargo de manera exitosa')
+num_parts = 10
+total_rows = len(ulta_beauty)
+chunk_size = total_rows // num_parts
+
+for i in range(num_parts):
+    start_idx = i * chunk_size
+    end_idx = (i + 1) * chunk_size if i != num_parts - 1 else total_rows
+    
+    # Leer cada parte
+    ulta_beauty_chunk = ulta_beauty.loc[start_idx:end_idx-1, :]
+
+    # Apply sentiment analysis to the 'text' column
+    ulta_beauty_chunk['sentiment'] = ulta_beauty_chunk['text'].apply(lambda x: analyze_sentiment(x))
+    ulta_beauty_chunk['sentiment_label'] = ulta_beauty_chunk['sentiment'].apply(lambda x: 'positive' if x == 1 else 'negative')
+
+    # Write the chunk to BigQuery
+    writetobigquery(ulta_beauty_chunk, 'windy-tiger-410421.UltaBeautyReviews.ulta_beauty_sentiment_analysis')
+
+    print(f'parte {i+1}/{num_parts} cargada a BigQuery exitosamente')
+
+print('Carga completa')
 
