@@ -71,7 +71,7 @@ num_parts = 20
 total_rows = len(ulta_beauty)
 chunk_size = total_rows // num_parts
 
-for i in range(num_parts):
+for i in range(18,num_parts):
     start_idx = i * chunk_size
     end_idx = (i + 1) * chunk_size if i != num_parts - 1 else total_rows
     
@@ -82,7 +82,7 @@ for i in range(num_parts):
     ulta_beauty_chunk['sentiment'] = ulta_beauty_chunk['text'].apply(lambda x: analyze_sentiment(x))
     ulta_beauty_chunk['sentiment_label'] = ulta_beauty_chunk['sentiment'].apply(lambda x: 'positive' if x == 1 else 'negative')
     ulta_beauty_chunk['hour'] = ulta_beauty_chunk['hour'].astype(str).str.split(':').str[0].astype(int)
-    
+
     # Write the chunk to BigQuery
     print('Cargando a BigQuery')
     writetobigquery(ulta_beauty_chunk, 'windy-tiger-410421.UltaBeautyReviews.ulta_beauty_sentiment_analysis')
