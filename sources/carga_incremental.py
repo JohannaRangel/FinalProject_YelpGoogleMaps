@@ -112,20 +112,6 @@ def datos_nuevos_yelp():
         #Agregamos la columna source 
     dfreviewsYelp['source']='Y'
     return dfreviewsYelp
- 
-credenciales={
-    "type": "service_account",
-    "project_id": "windy-tiger-410421",
-    "private_key_id": "956bf231305a520e97e9aa008609a70bda1eaf9a",
-    "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDXjAbw9JQZaLx7\nSf2uyzFkZ6B/t4Kww2A1SY+rm0JSr0IXoF88EdtNa068upJ4I0zC6dhD5xb2QCay\ne7K/LIxndhYPhi3ptA40+IxIAgfYbcqTt91P62RSIxhSwqlrBHPuVSMeilvgraPv\nTu0PHsBhUSD1ShM7woWJ5V4d7oGTKgsua4AMBQ9LCZ51CB74Wl1vI3711c7cojGJ\nPM71V2R6xewtwUaDM+Mi51K7ObyZM2fZ03LsjTGewa3jRhYYXASwIdbt+ynow2vd\nU1KF33eHfwEkXsn3kxtKiQxbz1ly65AQJrBSyVksKCll32zkmSyBgqeCuapsApmY\nzgvSmEvjAgMBAAECggEABmGOr7cgjp4DUnJkJba96Bc0m63+8E+1u0N0aDlTndII\nFrNN48qINQMJFNzrICO0uTfQtLXp1UbHPn/F+2iMtuAP6CFp84y74kU8wJb6zM/3\nRXyV0IYLSsPfi6JX/03lnA0o2dXGbDYyb7pk7zkoVdk1LL3RfZ0/yc92A/8pwTBZ\nXeMf1V6cahzoYZcIIDgJKR0E5JB8sRImwkjxllfR/Ni9JCOU+emHZlb4B42uZf72\n0TOVCN7PgF5VudHWZZyFdUpAHw4LrSuSv3ANGLj965XXGdjv32o94EXhT7uecu0U\nnVHAdmQoJy+toGdAUO+K371w7uTbYaDDG1uNTFb/fQKBgQDzbnKq8wZq6R5fZ/p1\nN80Uvdudd4cencsOuSZ/Ko3Miqs7BYp8xtCrEb0fOaems82bsy7OfLJzaKbmxa+k\n8GhApg3+b5x4M+aC3E2Kj+ilmS1/m3mpzdO5D7jIoTWJAzeaGQxM38q4DvshueSL\nxfJeCrNZaa+8W9iC1Aecy3DqrwKBgQDirQRIYGK1cK0wE0Qx44ploqIFqG+6v+fZ\ni+M4jbVAgC7WbSYrYLSW43wA/UP6oCS0wJ34RhdvCo/CPDDsgvwXXffzU55wMCgn\nK/nbeZHtaOg7Odp/L0vY6h2pnxO1qsR+K5HfqKjV74W5LJ90b7U8Yg1t8N3SuuKs\npScbzi3vDQKBgQC6Yq+zil44j4Ns400WYQJKRlAX0kQHwiOOg18hcPCfUvFmQIjX\nntZ4lR1sAhYGgpcEBv7opPtxeAiKm4Qv0s7P6RS/4q84Lezp90n7tNIZsR3wHZfa\n1riscog2PZCi9m6lM1aCqbsqkHXiTdXa21YGgUTvSgd/PgeZrESj3fT4CwKBgQCE\nQzAciyENfZGQW62O7pXyd9LSOlX3QcKmzVjnxsfbuu+Zbla3ONYmtNXGPgFMW+UP\nEtUZ6MwDnsYDL9vcJRGzEMF82W25SGAleyNvTKA5Rt06sacsTwySpQhp0MhPWDUO\n6Z1UQ7VAH2KHieIArq2xbgUoAUNtkl5xHmyTbNqggQKBgQDZCcqShjLKGlEpK6H+\nXEDX/0WdYmJjN7IPiPSPOlYkS6oTZgdMDMJYd3inCQStW4XSOl9pKH1xStqZJpYP\nl9hqP6hleiBC1zqQfJ11wQExM1vWdxj16YR9Xp4Kx0U6wxGRFDf0zjnp1jkRO+RR\nHJFkSRM0Wfj/SwcqQM00IAw4yg==\n-----END PRIVATE KEY-----\n",
-    "client_email": "data-insight-pro@windy-tiger-410421.iam.gserviceaccount.com",
-    "client_id": "110396649087684474770",
-    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    "token_uri": "https://oauth2.googleapis.com/token",
-    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/data-insight-pro%40windy-tiger-410421.iam.gserviceaccount.com",
-    "universe_domain": "googleapis.com"
-    }
 
 
 def cliente_bigquery():
