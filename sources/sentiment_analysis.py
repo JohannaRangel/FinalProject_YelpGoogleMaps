@@ -81,7 +81,8 @@ for i in range(num_parts):
     # Apply sentiment analysis to the 'text' column
     ulta_beauty_chunk['sentiment'] = ulta_beauty_chunk['text'].apply(lambda x: analyze_sentiment(x))
     ulta_beauty_chunk['sentiment_label'] = ulta_beauty_chunk['sentiment'].apply(lambda x: 'positive' if x == 1 else 'negative')
-
+    ulta_beauty_chunk['hour'] = ulta_beauty_chunk['hour'].astype(str).str.split(':').str[0].astype(int)
+    
     # Write the chunk to BigQuery
     print('Cargando a BigQuery')
     writetobigquery(ulta_beauty_chunk, 'windy-tiger-410421.UltaBeautyReviews.ulta_beauty_sentiment_analysis')
