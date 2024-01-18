@@ -24,7 +24,7 @@ Thank you for exploring our project repository. Feel free to navigate through th
 ## Repository Structure<br />
 ├─ [assets/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/assets) _Contains multimedia resources, images, or other assets used in the project._<br />
 ├─ [dashboard/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/dashboard) _Includes files related to the creation and development of an interactive dashboard._<br />
-├─ [datasets/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/datasets) _Stores datasets used in the project, organized into separate folders for CSV and parquet files._<br />
+├─ [datasets/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/datasets) _Stores datasets used in the project, organized into separate folders for csv and parquet files._<br />
 │  ├─ [csv/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/datasets/csv)<br /> 
 │  ├─ [parquets/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/datasets/parquets)<br />
 ├─ [diagrams/](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/tree/main/diagrams) _This folder contains diagrams and visual schematics related to the data pipeline. Explore graphical representations here that illustrate the architecture, process flows, and other relevant visual aspects of the project._<br /> 
