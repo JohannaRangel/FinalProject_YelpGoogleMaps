@@ -7,11 +7,11 @@ from google.oauth2 import service_account
 '''conexión a big query'''
 
 # Configura tu proyecto y credenciales
-project_id = 'windy-tiger-410421'
+project_id = 'final-project-data-insght-pro'
 client = bigquery.Client(project=project_id)
 
 # Especifica tu conjunto de datos y tabla para Yelp Reviews
-dataset_id = 'UltaBeautyReviews'
+dataset_id = 'ultabeautyreviews'
 table_idY = 'yelp_reviews_ulta_beauty'
 table_idG = 'google_reviews_ulta_beauty'
 
@@ -71,7 +71,7 @@ num_parts = 20
 total_rows = len(ulta_beauty)
 chunk_size = total_rows // num_parts
 
-for i in range(18,num_parts):
+for i in range(num_parts):
     start_idx = i * chunk_size
     end_idx = (i + 1) * chunk_size if i != num_parts - 1 else total_rows
     
