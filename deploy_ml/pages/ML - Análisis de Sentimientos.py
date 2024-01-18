@@ -2,10 +2,29 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 import streamlit as st
+from google.cloud import bigquery
 
-# Cargar datos desde el archivo CSV
-file_path = 'topics.csv'
-df = pd.read_csv(file_path)
+'''Conexión a BigQuery'''
+
+# Configura tu proyecto y credenciales
+project_id = 'final-project-data-insght-pro'
+client = bigquery.Client(project=project_id)
+
+# Especifica tu conjunto de datos y tabla para Yelp Reviews
+dataset_id = 'ultabeautyreviews'
+table_id = 'ulta_beauty_sentiment_analysis'
+
+
+# Obtiene el esquema de la tabla de Yelp Reviews y Google Reviews
+table = client.get_table(f'{project_id}.{dataset_id}.{table_id}')
+
+# Construye y ejecuta la consulta para Yelp Reviews
+queryY = f"SELECT * FROM `{project_id}.{dataset_id}.{table_id}`"
+query_jobY = client.query(queryY)
+df=query_jobY.to_dataframe()
+
+
+"""Generación WordCloud"""
 
 # Filtrar datos para obtener solo sentimientos positivos y negativos
 positive_reviews = df[df['sentiment_label'] == 'positive']['text'].astype(str)

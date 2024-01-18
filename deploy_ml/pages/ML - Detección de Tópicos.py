@@ -7,12 +7,38 @@ from sklearn.decomposition import LatentDirichletAllocation
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import nltk
-
+from google.cloud import bigquery
 nltk.download('stopwords')
 nltk.download('punkt')
 
-# Cargar tu DataFrame inicial (reemplaza esto con tu carga de datos real)
-df = pd.read_csv("C:/Users/johan/Bootcamp_SoyHenry/PI_Final/topics.csv")
+
+'''Conexión a BigQuery'''
+
+# Configura tu proyecto y credenciales
+project_id = 'final-project-data-insght-pro'
+client = bigquery.Client(project=project_id)
+
+# Especifica tu conjunto de datos y tabla para Yelp Reviews
+dataset_id = 'ultabeautyreviews'
+table_id = 'ulta_beauty_sentiment_analysis'
+table_google='google_business_data'
+table_yelp='yelp_business_data'
+
+# Construye y ejecuta la consulta para Yelp Reviews
+query = f"""
+    SELECT s.business_id, s.stars, s.text, s.month, s.year, s.source, s.sentiment_label, g.city, g.state
+    FROM `{project_id}.{dataset_id}.{table_id}` AS s
+    INNER JOIN `{project_id}.{dataset_id}.{table_google}` AS g
+    ON s.business_id = g.business_id
+    UNION ALL
+    SELECT s.business_id, s.stars, s.text, s.month, s.year, s.source, s.sentiment_label, y.city, y.state
+    FROM `{project_id}.{dataset_id}.{table_id}` AS s
+    INNER JOIN `{project_id}.{dataset_id}.{table_yelp}` AS y
+    ON s.business_id = y.business_id
+"""
+
+query_job = client.query(query)
+df = query_job.to_dataframe()
 
 # Definir las opciones por defecto (vacías)
 default_options = {
@@ -29,8 +55,6 @@ default_options = {
 
 filters = {}
 
-
-#filters = {}
 for column in default_options:
     filters[column] = st.sidebar.multiselect(column.capitalize(), default_options[column] + list(df[column].unique()))
 
