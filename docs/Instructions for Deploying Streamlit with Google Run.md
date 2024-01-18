@@ -53,7 +53,7 @@ To begin the deployment process on Google Cloud Run, start by creating your appl
 
 In the Navigation Menu of your Google Cloud Console, locate and select "Google Cloud Run." Click on "Create Service" to initiate the creation of a new service. Google Cloud Run should automatically recognize the container you uploaded during the build process, allowing you to select it for deployment.
 
-![imagen](..\assets\Cloudrun.png)
+![imagen](assets/Cloudrun.png)
 
 Make sure to check the box that says “Allow unauthenticated invocations” when setting up your service. This allows the public to access your url.
 
@@ -64,5 +64,5 @@ Once the deployment process is complete, Google Cloud Run will provide you with 
 Open a web browser and navigate to the provided URL to explore and interact with your Streamlit Web App. Share this URL with others to showcase your deployed application.
 
 
-![Alt text](..\assets\Cloudrunurl.png)
+![Alt text](assets/Cloudrunurl.png)
 
