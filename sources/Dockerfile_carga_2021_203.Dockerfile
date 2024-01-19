@@ -11,7 +11,7 @@ RUN pip install pyarrow
 RUN pip install db-dtypes
 
 # Copiar tu script al contenedor
-COPY  YGC_pipline_reviews_2021_2023.py /app/
+COPY YGC_pipline_reviews_2021_2023.py /app/
 COPY service_account.json /app/
 COPY businessId_gmapID.csv /app/
 

@@ -10,7 +10,7 @@ from google.cloud import storage
 
 def datos_nuevos_Google():
     # URL de la API con el token
-    api_url = "https://api.apify.com/v2/actor-tasks/frombini~google-maps-scraper-task/runs/last/dataset/items?token=apify_api_ZE7FMykxbpsHef9FAMxUqF9esYgIGK2LrElm&unwind=reviews&fields=placeId,reviews&omit=textTranslated,publishAt,likesCount,reviewId,reviewUrl,reviewerUrl,reviewerPhotoUrl,reviewerNumberOfReviews,isLocalGuide,rating,reviewImageUrls,reviewContext,reviewDetailedRating,name,responseFromOwnerDate,responseFromOwnerText"
+    api_url = "https://api.apify.com/v2/datasets/ol07MgXejckvz9RLD/items?token=apify_api_ZE7FMykxbpsHef9FAMxUqF9esYgIGK2LrElm&unwind=reviews&fields=placeId,reviews&omit=textTranslated,publishAt,likesCount,reviewId,reviewUrl,reviewerUrl,reviewerPhotoUrl,reviewerNumberOfReviews,isLocalGuide,rating,reviewImageUrls,reviewContext,reviewDetailedRating,name,responseFromOwnerDate,responseFromOwnerText"
 
     # Realiza la solicitud GET
     response = requests.get(api_url)
@@ -113,10 +113,10 @@ def datos_nuevos_yelp():
     dfreviewsYelp['source']='Y'
     return dfreviewsYelp
  
-
+credentials_path=r'service_account.json'
 
 def cliente_bigquery():
-    credentials_path='service_account.json'
+    
     credentials =  service_account.Credentials.from_service_account_file(credentials_path, scopes = ['https://www.googleapis.com/auth/cloud-platform'])
     client = bigquery.Client(credentials=credentials, project=credentials.project_id)
     return client
@@ -129,7 +129,7 @@ def writetobigquery(df,table_id):
 def query_bigquery(query,tabla,dataframe):
     client=cliente_bigquery()
     lista_business='('+str([a for a in dataframe['business_id'].unique()]).strip('[]')+')'
-    query =f"SELECT {query} FROM `windy-tiger-410421.UltaBeautyReviews.{tabla}` WHERE business_id in {lista_business}"
+    query =f"SELECT {query} FROM `final-project-data-insght-pro.ultabeautyreviews.{tabla}` WHERE business_id in {lista_business}"
     if 'user_id' in dataframe.columns:
         lista_user='('+str([a for a in dataframe['user_id'].unique()]).strip('[]')+')'
         query+=f" AND user_id in {lista_user}"
@@ -150,13 +150,13 @@ def checar_filas(dataframe_etl,tabla):
     if len(filassincargar)==0:
         return 'datos ya registrados 2022-2023'
     else:
-        writetobigquery(df,f'windy-tiger-410421.UltaBeautyReviews.{tabla}')
-        return 'carga de filas pendientes 2022-2023'
+        writetobigquery(df,f'final-project-data-insght-pro.ultabeautyreviews.{tabla}')
+        return 'carga de filas pendientes 2022-2023'+ tabla
 def validación(dataframe,tabla,logs):
     results=query_bigquery('COUNT(*)',tabla,dataframe)
     registros=next(results.result())[0]
     if registros==0:
-        writetobigquery(dataframe,f'windy-tiger-410421.UltaBeautyReviews.{tabla}')
+        writetobigquery(dataframe,f'final-project-data-insght-pro.ultabeautyreviews.{tabla}')
         logs=cargar_logs(logs,'carga datos 2022-2023','Google reviews')
     else:
         logs=cargar_logs(logs,checar_filas(dataframe,tabla),'Google reviews')
@@ -169,7 +169,7 @@ def cargar_logs(df,descripcion,archivo):
     return df
 def upload_to_gcs(bucket_name, source_file_path, destination_blob_name):
     # Crea una instancia del cliente de Google Cloud Storage
-    client = storage.Client.from_service_account_json('service_account.json')
+    client = storage.Client.from_service_account_json(credentials_path)
 
     # Obtiene el bucket
     bucket = client.get_bucket(bucket_name)
@@ -182,8 +182,8 @@ def upload_to_gcs(bucket_name, source_file_path, destination_blob_name):
 
     print(f'Archivo {source_file_path} subido a {destination_blob_name} en el bucket {bucket_name}.')
 def run():
-    client = storage.Client.from_service_account_json('service_account.json')
-    blob=client.bucket('ultabeauty').blob('logs/logs_loads.csv')
+    client = storage.Client.from_service_account_json(credentials_path)
+    blob=client.bucket('ultabeauty2024').blob('logs/logs_loads.csv')
     contenido = blob.download_as_text()
     logs=pd.read_csv(StringIO(contenido))
     df=datos_nuevos_Google()
@@ -201,7 +201,7 @@ def run():
             filassincargar+=1
     if filassincargar==0:
         print('filas cargadas correctamente')
-        logs=cargar_logs(logs,'verificación de carga completa reviews google 2022-2023','yelp reviews')
+        logs=cargar_logs(logs,'verificación de carga completa reviews google 2022-2023','google reviews')
     else:
         print(f'filas pendientes de cargar{filassincargar}')
         logs=cargar_logs(logs,'cargar las filas pendientes','google reviews')
@@ -225,7 +225,7 @@ def run():
     try:
 
         logs.to_csv('logs_loads.csv',index=False)
-        bucket_name = 'ultabeauty'
+        bucket_name = 'ultabeauty2024'
         source_file_path = 'logs_loads.csv'
         destination_blob_name = 'logs/logs_loads.csv'
         # Llama a la función para subir el archivo
