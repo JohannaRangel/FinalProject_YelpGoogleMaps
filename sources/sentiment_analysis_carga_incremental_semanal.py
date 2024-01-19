@@ -164,8 +164,6 @@ def comprobaciones(filas,logs):
         logs=cargar_logs(logs,f'filas pendientes de cargar: {filas_sin_cargar}, checar errores en ulta_beauty_sentiment_analysis','ulta_beauty_sentiment_analysis carga incremental')
         return logs
 
-app=Flask(__name__)
-@app.route("/")
 def run():
     client = storage.Client()
     blob=client.bucket('ultabeauty2024').blob('logs/logs_loads.csv')
@@ -198,6 +196,3 @@ def run():
 # Llama a la función para subir el archivo
         upload_to_gcs('ultabeauty2024',buffer , 'logs/logs_loads.csv')
         return 'reviews actualizadas'
-
-if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
