@@ -1,0 +1,10 @@
+pandas
+matplotlib
+wordcloud
+streamlit
+google-cloud-bigquery
+matplotlib
+seaborn
+scikit-learn
+nltk
+db-dtypes

@@ -14,6 +14,8 @@ This is a guide to the content that you can find inside the notebooks folder.
 
 * **YGC_topic_detection.ipynb:** This Jupyter Notebook focuses on the ETL (Extract, Transform, Load) process and machine learning-based topic detection using a dataset of reviews. The primary goal is to extract insights from reviews by implementing topic modeling techniques. Libraries used: pandas, wordcloud, matplotlib, spacy, scikit-learn, transformers. And Pre-trained Models: Latent Dirichlet Allocation (LDA), T5 (Text-to-Text Transfer Transformer)
 
+* **EDA.ipynb:** This Jupyter Notebook conducts an in-depth Exploratory Data Analysis (EDA) on Ulta Beauty reviews sourced from Google and Yelp. The EDA aims to unveil valuable insights into user sentiments, patterns, and geographic distribution.
+
 
 
 
