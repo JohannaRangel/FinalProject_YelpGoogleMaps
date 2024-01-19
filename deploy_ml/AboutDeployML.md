@@ -2,7 +2,7 @@
 
 Explore our hassle-free Streamlit application deployed on Google Cloud Run. Just click the link below and experience the magic!
 
-[Open Streamlit Application](#)
+**[Open Streamlit Application](https://endpointmlgcloud-buquga5lhq-uc.a.run.app/ML_-_Detección_de_Tópicos)**
 
 ## How We Did It:
 
@@ -23,3 +23,21 @@ Google Cloud Run provided a public URL for our Streamlit web app. Visit it and s
 For more detailed steps on implementing Streamlit with Google Cloud Run, you can consult the documentation in this [link](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/blob/main/docs/Instructions%20for%20Deploying%20Streamlit%20with%20Google%20Run.md) 
 
 Enjoy exploring data with our Streamlit application, now just a click away!
+
+<br /> 
+<p align="center">
+  <img src="https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/blob/main/assets/app1.png" width="800" alt="platform">
+</p>
+<br /> 
+<p align="center">
+  <img src="https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/blob/main/assets/app2.png" width="800" alt="platform">
+</p>
+<br /> 
+<p align="center">
+  <img src="https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/blob/main/assets/app3.png" width="800" alt="platform">
+</p>
+<br />
+<p align="center">
+  <img src="https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/blob/main/assets/app4.png" width="800" alt="platform">
+</p>
+<br /> 
