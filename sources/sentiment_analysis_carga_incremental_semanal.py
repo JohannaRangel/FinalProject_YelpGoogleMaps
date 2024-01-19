@@ -7,6 +7,7 @@ from google.cloud import storage
 from io import StringIO
 import os
 from flask import Flask
+from io import BytesIO
 
 project_id = 'final-project-data-insght-pro'
 dataset_id = 'ultabeautyreviews'
@@ -112,8 +113,21 @@ def cargar_logs(df,descripcion,archivo):
     log=pd.DataFrame(lista)
     df=pd.concat([df,log])
     return df
+def upload_to_gcs(bucket_name, file, destination_blob_name):
+    # Crea una instancia del cliente de Google Cloud Storage
+    client = storage.Client()
 
-def comprobaciones(filas):
+    # Obtiene el bucket
+    bucket = client.get_bucket(bucket_name)
+
+    # Crea un nuevo blob en el bucket utilizando el nombre de destino proporcionado
+    blob = bucket.blob(destination_blob_name)
+
+    # Sube el archivo al blob
+    blob.upload_from_file(file)
+ 
+
+def comprobaciones(filas,logs):
     year_today=datetime.now().year
     year_last_week=(datetime.now()-timedelta(8)).year
     month_last_week=(datetime.now()-timedelta(8)).month
@@ -136,10 +150,6 @@ def comprobaciones(filas):
         df=job.to_dataframe()
         df_bigquery.append(df)
     df_bigquery=pd.concat(df_bigquery)
-    client = storage.Client()
-    blob=client.bucket('ultabeauty2024').blob('logs/logs_loads.csv')
-    contenido = blob.download_as_text()
-    logs=pd.read_csv(StringIO(contenido))
     filas_sin_cargar=0
     for index, row in filas.iterrows():
                 is_contained = df_bigquery[df_bigquery.eq(row).all(axis=1)].shape[0] > 0
@@ -149,14 +159,18 @@ def comprobaciones(filas):
                      filas_sin_cargar+=1
     if filas_sin_cargar==0:
          logs=cargar_logs(logs,'filas cargadas correctamante a ulta_beauty_sentiment_analysis','ulta_beauty_sentiment_analysis carga incremental')
-         return 'filas cargadas correctamante a ulta_beauty_sentiment_analysis'
+         return logs
     else:
         logs=cargar_logs(logs,f'filas pendientes de cargar: {filas_sin_cargar}, checar errores en ulta_beauty_sentiment_analysis','ulta_beauty_sentiment_analysis carga incremental')
-        return f'filas pendientes de cargar: {filas_sin_cargar}, checar errores en ulta_beauty_sentiment_analysis'
+        return logs
 
 app=Flask(__name__)
 @app.route("/")
 def run():
+    client = storage.Client()
+    blob=client.bucket('ultabeauty2024').blob('logs/logs_loads.csv')
+    contenido = blob.download_as_text()
+    logs=pd.read_csv(StringIO(contenido))
     filas_a_comprobar=[]
     for fuente in ['G','Y']:
         querys=querys_bigquery(fuente)
@@ -165,10 +179,25 @@ def run():
             filas_a_comprobar.append(filas_procesadas)
     if len(filas_a_comprobar)>0:
         filas_a_comprobar=pd.concat(filas_a_comprobar)
-        resultado=comprobaciones(filas_a_comprobar)
-        return resultado
+        logs=comprobaciones(filas_a_comprobar,logs)
+        csv_content = logs.to_csv(index=False)
+# Crear un objeto BytesIO y escribir el contenido CSV
+        buffer = io.BytesIO()
+        buffer.write(csv_content.encode('utf-8'))
+        buffer.seek(0)
+# Llama a la función para subir el archivo
+        upload_to_gcs('ultabeauty2024',buffer , 'logs/logs_loads.csv')
+        return 'reviews actualizadas'
     else:
-        return 'analisis de sentimiento completado'
+        logs=cargar_logs(logs,'no hay filas para actualizar','sentiment analisis')
+        csv_content = logs.to_csv(index=False)
+# Crear un objeto BytesIO y escribir el contenido CSV
+        buffer = BytesIO()
+        buffer.write(csv_content.encode('utf-8'))
+        buffer.seek(0)
+# Llama a la función para subir el archivo
+        upload_to_gcs('ultabeauty2024',buffer , 'logs/logs_loads.csv')
+        return 'reviews actualizadas'
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
