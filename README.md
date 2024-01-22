@@ -52,6 +52,10 @@ Thank you for exploring our project repository. Feel free to navigate through th
 _Final Products: Two Machine Learning models (Sentiment Analysis and Topic Detection) along with an interactive Dashboard featuring 5 key KPIs. Implemented on Google Cloud Platform (GCP) and deployed on Streamlit. Explore the application and enjoy!._ <br />
 <br />
 
+### **[Project Presentation: A Comprehensive Insight into Our Innovative Solution](https://endpointmlgcloud-buquga5lhq-uc.a.run.app/ML_-_Detección_de_Tópicos)** :bar_chart:
+_This presentation video offers a concise and professional overview of our final project, highlighting its distinctive features, innovative functionalities (endpoints), and the strategic impact it aims to achieve._ <br />
+<br />
+
 **[README.md](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/blob/main/README.md)**<br />
 
 
