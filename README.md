@@ -49,11 +49,11 @@ Thank you for exploring our project repository. Feel free to navigate through th
 <br />
 
 ### **[Open Streamlit Application](https://endpointmlgcloud-buquga5lhq-uc.a.run.app/ML_-_Detección_de_Tópicos)** :bar_chart:
-_Final Products: Two Machine Learning models (Sentiment Analysis and Topic Detection) along with an interactive Dashboard featuring 5 key KPIs. Implemented on Google Cloud Platform (GCP) and deployed on Streamlit. Explore the application and enjoy!._ <br />
+_Final Products: Two Machine Learning models (Sentiment Analysis and Topic Detection) along with an interactive Dashboard featuring 5 key KPIs. Implemented on Google Cloud Platform (GCP) and deployed on Streamlit. Explore the [application](https://endpointmlgcloud-buquga5lhq-uc.a.run.app/ML_-_Detección_de_Tópicos) and enjoy!._ <br />
 <br />
 
 ### **[Project Presentation: A Comprehensive Insight into Our Innovative Solution](https://www.youtube.com/watch?v=p04NCib2jxQ)** :bar_chart:
-_This presentation video offers a concise and professional overview of our final project, highlighting its distinctive features, innovative functionalities (endpoints), and the strategic impact it aims to achieve._ <br />
+_This presentation video offers a concise and professional overview of our final project, highlighting its distinctive features, innovative functionalities (endpoints), and the strategic impact it aims to achieve.Click to watch the [video](https://www.youtube.com/watch?v=p04NCib2jxQ)_ <br />
 <br />
 
 **[README.md](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/blob/main/README.md)**<br />
