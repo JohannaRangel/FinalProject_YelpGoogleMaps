@@ -48,7 +48,7 @@ Thank you for exploring our project repository. Feel free to navigate through th
 ├─ [Contributors](https://github.com/JohannaRangel/FinalProject_YelpGoogleMaps/wiki#contributors)<br />
 <br />
 
-### **[Open Streamlit Application](https://endpointmlgcloud-buquga5lhq-uc.a.run.app/ML_-_Detección_de_Tópicos)** :bar_chart:
+### **[Streamlit Application](https://endpointmlgcloud-buquga5lhq-uc.a.run.app/ML_-_Detección_de_Tópicos)** :bar_chart:
 _Final Products: Two Machine Learning models (**Sentiment Analysis and Topic Detection**) along with an interactive Dashboard featuring 5 key KPIs. Implemented on Google Cloud Platform (GCP) and deployed on Streamlit. Explore the [application](https://endpointmlgcloud-buquga5lhq-uc.a.run.app/ML_-_Detección_de_Tópicos) and enjoy!._ <br />
 <br />
 
