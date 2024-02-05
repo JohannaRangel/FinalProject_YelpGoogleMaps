@@ -52,7 +52,7 @@ Thank you for exploring our project repository. Feel free to navigate through th
 _Final Products: Two Machine Learning models (**Sentiment Analysis and Topic Detection**) along with an interactive Dashboard featuring 5 key KPIs. Implemented on Google Cloud Platform (GCP) and deployed on Streamlit. Explore the [application](https://endpointmlgcloud-buquga5lhq-uc.a.run.app/ML_-_Detección_de_Tópicos) and enjoy!._ <br />
 <br />
 
-### **[Project Presentation: A Comprehensive Insight into Our Innovative Solution](https://www.youtube.com/watch?v=p04NCib2jxQ)** :bar_chart:
+### **[Project Presentation: A Comprehensive Insight into Our Innovative Solution](https://www.youtube.com/watch?v=p04NCib2jxQ)** :movie_camera:
 _This presentation video offers a concise and professional overview of our final project, highlighting its distinctive features, innovative functionalities (endpoints), and the strategic impact it aims to achieve.Click to watch the [video](https://www.youtube.com/watch?v=p04NCib2jxQ)_ <br />
 <br />
 
